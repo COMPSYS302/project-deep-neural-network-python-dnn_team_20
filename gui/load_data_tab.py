@@ -81,6 +81,8 @@ class LoadDataTab(QWidget):
 
         for i in range(36):
             class_folder = os.path.join(image_folder, str(i))
+            if not os.listdir(class_folder):  # Folder is empty
+                os.rmdir(class_folder)  # Remove it
             os.makedirs(class_folder, exist_ok=True)
 
         with open(csv_file, 'r') as file:

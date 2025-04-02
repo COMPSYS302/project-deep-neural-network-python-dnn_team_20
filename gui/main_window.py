@@ -22,3 +22,4 @@ class SignLanguageApp(QMainWindow):
         self.tabs.addTab(self.train_tab, "Train")
 
         self.load_data_tab.data_loaded.connect(self.view_data_tab.load_images)
+        self.load_data_tab.data_loaded.connect(self.train_tab.set_dataset_path)
