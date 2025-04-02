@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow, QTabWidget
 from gui.load_data_tab import LoadDataTab
 from gui.view_data_tab import ViewDataTab
+from gui.train_tab import TrainTab
+
 
 class SignLanguageApp(QMainWindow):
     def __init__(self):
@@ -15,13 +17,13 @@ class SignLanguageApp(QMainWindow):
         # Create the tabs
         self.load_data_tab = LoadDataTab()
         self.view_data_tab = ViewDataTab()
+        self.train_tab = TrainTab()
 
         # Add tabs to the tab widget
         self.tabs.addTab(self.load_data_tab, "Load Data")
         self.tabs.addTab(self.view_data_tab, "View Data")
+        self.tabs.addTab(self.train_tab, "Train")
 
         # Connect signals (assuming you have this signal in LoadDataTab)
         self.load_data_tab.data_loaded.connect(self.view_data_tab.load_images)
-
-       
-
+        self.load_data_tab.data_loaded.connect(self.train_tab.set_dataset_path)

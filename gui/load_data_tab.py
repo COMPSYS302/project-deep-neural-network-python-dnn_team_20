@@ -119,6 +119,8 @@ class LoadDataTab(QWidget):
         # Create subfolders for each label (0-35)
         for i in range(36):
             class_folder = os.path.join(image_folder, str(i))
+            if not os.listdir(class_folder):  # Folder is empty
+                os.rmdir(class_folder)  # Remove it
             os.makedirs(class_folder, exist_ok=True)
 
         # Read the CSV file and convert each row into an image
