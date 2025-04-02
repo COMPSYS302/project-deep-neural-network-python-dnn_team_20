@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QTabWidget
+from gui.home_tab import HomeTab
 from gui.load_data_tab import LoadDataTab
 from gui.view_data_tab import ViewDataTab
 from gui.train_tab import TrainTab
@@ -7,23 +8,27 @@ from gui.train_tab import TrainTab
 class SignLanguageApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Sign Language Recognition")
+        self.setWindowTitle("SignCare")
         self.setGeometry(100, 100, 1000, 500)
 
-                # Create the QTabWidget
+        # Create the QTabWidget
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
 
         # Create the tabs
+        self.home_tab = HomeTab(self.tabs)
         self.load_data_tab = LoadDataTab()
         self.view_data_tab = ViewDataTab()
         self.train_tab = TrainTab()
 
         # Add tabs to the tab widget
-        self.tabs.addTab(self.load_data_tab, "Load Data")
-        self.tabs.addTab(self.view_data_tab, "View Data")
-        self.tabs.addTab(self.train_tab, "Train")
+        self.tabs.addTab(self.home_tab, "HOME")
+        self.tabs.addTab(self.load_data_tab, "LOAD")
+        self.tabs.addTab(self.view_data_tab, "VIEW")
+        self.tabs.addTab(self.train_tab, "TRAIN")
 
         # Connect signals (assuming you have this signal in LoadDataTab)
         self.load_data_tab.data_loaded.connect(self.view_data_tab.load_images)
         self.load_data_tab.data_loaded.connect(self.train_tab.set_dataset_path)
+
+        self.tabs.setCurrentIndex(0)
