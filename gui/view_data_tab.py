@@ -37,6 +37,7 @@ class ViewDataTab(QWidget):
 
         self.figure = plt.Figure()
         self.canvas = FigureCanvas(self.figure)
+        self.canvas.setMinimumHeight(100) 
         layout.addWidget(self.canvas)
 
         self.setLayout(layout)
