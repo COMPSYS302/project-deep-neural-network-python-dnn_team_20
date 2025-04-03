@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QSizePolicy, QSpacerItem
 from PyQt5.QtCore import Qt
 
 class HomeTab(QWidget):
@@ -9,6 +9,9 @@ class HomeTab(QWidget):
 
         layout = QVBoxLayout()
 
+        spacer_top = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addItem(spacer_top)
+        
         self.title_label = QLabel("SignCare")
         self.title_label.setStyleSheet("font-size: 60px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px;")  # 20px gap below title
         
@@ -33,6 +36,9 @@ class HomeTab(QWidget):
         layout.addWidget(self.load_button)
         layout.addWidget(self.view_button)
         layout.addWidget(self.train_button)
+
+        spacer_bottom = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addItem(spacer_bottom)
 
         layout.setSpacing(10)
 

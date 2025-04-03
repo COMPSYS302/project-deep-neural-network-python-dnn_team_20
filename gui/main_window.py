@@ -9,7 +9,6 @@ class SignLanguageApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SignCare")
-        self.setGeometry(100, 100, 1000, 500)
 
         # Create the QTabWidget
         self.tabs = QTabWidget()

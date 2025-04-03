@@ -23,7 +23,7 @@ class ViewDataTab(QWidget):
         # Scrollable area to display images
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)  # Allow the widget to resize
-        self.scroll_area.setMinimumSize(600, 500)  # Set minimum size for the scroll area
+        self.scroll_area.setMinimumSize(600, 400)  # Set minimum size for the scroll area
         self.scroll_widget = QWidget()  # Widget to hold all the images
         self.scroll_layout = QGridLayout()  # Grid layout to arrange the images
         self.scroll_widget.setLayout(self.scroll_layout)

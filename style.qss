@@ -43,3 +43,54 @@ QTabBar::tab:selected {
   background: #C4DCFC; 
   margin-bottom: -1px; 
 }
+
+
+/* Basic scroll bar css */
+
+QScrollArea {
+    background-color: transparent;  /* Optional: Add a background color */
+}
+
+QScrollBar:vertical {
+    border: 1px solid #89B3DA;
+    background: #C4DCFC;
+    width: 15px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical {
+    background: #89B3DA;  /* Default color */
+    border-radius: 5px;
+    min-height: 10px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #5A7CB3;  /* Hover color */
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background: none;
+    border: none;
+}
+
+QScrollBar:horizontal {
+    border: 2px solid #89B3DA;
+    background: #f0f0f0;
+    height: 10px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #89B3DA;  /* Default color */
+    border-radius: 5px;
+    min-width: 10px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #5A7CB3;  /* Hover color */
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    background: none;
+    border: none;
+}
