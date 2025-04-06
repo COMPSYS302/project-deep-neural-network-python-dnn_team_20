@@ -98,18 +98,19 @@ class ViewDataTab(QWidget):
     def update_filter(self):
         filter_text = self.filter_input.text().strip().lower()
 
-        # If the input is a digit, check whether it should map to 26-35
         if filter_text.isdigit():
-            self.display_images(filter_label=filter_text)  # Show images for the digit label
             num = int(filter_text)
             if 0 <= num <= 9:
                 label = str(num + 26)  # Map numbers 0-9 to classes 26-35
-            self.display_images(filter_label=label)
+                self.display_images(filter_label=label)
+            else:
+                self.display_images(filter_label=filter_text)  # Just use the digit directly
         elif filter_text.isalpha() and len(filter_text) == 1:
             label = str(ord(filter_text) - ord('a'))  # Convert 'a' -> 0, ..., 'z' -> 25
             self.display_images(filter_label=label)
         else:
             self.display_images(filter_label=None)  # Show all images if input is invalid
+
 
     def update_statistics(self):
         """Update the statistics label with the count of images for each class."""

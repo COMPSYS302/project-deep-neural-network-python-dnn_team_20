@@ -93,7 +93,6 @@ class LoadDataTab(QWidget):
                 progress = int((i / total) * 100)
                 self.progress_updated.emit(progress)
                 time.sleep(0.00005)  # Small delay to simulate processing time
-                # time.sleep(0.05)  # Small delay to show progress update
 
             # If loading is not stopped, update the status to show success
             if self.loading:
@@ -124,9 +123,9 @@ class LoadDataTab(QWidget):
 
         # Special mapping for "sign_mnist_alpha_digits_test.csv"
         label_mapping_test = {
-            34: 28,    
-            35: 31,      
-            32:30,
+              26:35,
+              27:26,
+              28:33
         }
 
         # Determine which mapping to use
