@@ -40,25 +40,7 @@ class ViewDataTab(QWidget):
         layout.addWidget(self.canvas)
 
         self.setLayout(layout)
-
-        # # Label to show the dataset statistics
-        # self.stats_label = QLabel("Dataset Statistics: ")
-        # layout.addWidget(self.stats_label)
-
-
-        # self.status_scroll_area =  QScrollArea() # Label to show status when no images are loaded
-        # self.status_scroll_area.setWidgetResizable(True) 
-        # self.stats_container = QWidget() 
-        # self.stats_layout = QVBoxLayout(self.stats_container)
-        # self.stats_label = QLabel()  # Label to display statistics
-        # self.stats_label.setWordWrap(True)  # Ensure text wraps
-
-        # self.stats_layout.addWidget(self.stats_label)
-        # self.scroll_area.setWidget(self.stats_container)
-
-        # layout.addWidget(self.status_scroll_area)  # Add scroll area to the main layout
-        
-               # Set the layout for this widget
+        # Set the layout for this widget
         self.setLayout(layout)
         
         
