@@ -3,6 +3,7 @@ import time
 import threading
 import numpy as np
 import cv2
+import shutil  # Add this import
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QProgressBar, QLabel, QFileDialog
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QLabel, QWidget, QSpacerItem, QSizePolicy
 
@@ -91,8 +92,7 @@ class LoadDataTab(QWidget):
                 # self.progress_updated.emit(int((i / total) * 100))
                 progress = int((i / total) * 100)
                 self.progress_updated.emit(progress)
-                time.sleep(0.0005)  # Small delay to simulate processing time
-                # time.sleep(0.05)  # Small delay to show progress update
+                time.sleep(0.00005)  # Small delay to simulate processing time
 
             # If loading is not stopped, update the status to show success
             if self.loading:
@@ -110,44 +110,77 @@ class LoadDataTab(QWidget):
         self.loading = False
 
     def convert_csv_to_images(self, csv_file):
-        # Create a folder to save images
-        # image_folder = os.path.join(os.path.dirname(csv_file), "images")
-        image_folder = os.path.join(os.path.dirname(csv_file), "images_" + str(int(time.time())))
+        # Default mapping
+        label_mapping_train = {
+            27: 26,    # Class 26 should contain class 27's images
+            26: 35,     # Class 35 should contain class 0's images
+            28: 33,    # Class 33 should contain class 2's images
+            31 :34,
+            30 :27,
+            29 :32,
+            35: 31
+        }
 
-        os.makedirs(image_folder, exist_ok=True)  # Create image folder if it doesn't exist
+        # Special mapping for "sign_mnist_alpha_digits_test.csv"
+        label_mapping_test = {
+              26:35,
+              27:26,
+              28:33
+        }
+
+        # Determine which mapping to use
+        if "sign_mnist_alpha_digits_test.csv" in csv_file:
+            label_mapping = label_mapping_test
+        else:
+            label_mapping = label_mapping_train
+
+        # Create an output folder
+        image_folder = os.path.join(os.path.dirname(csv_file), "images_" + str(int(time.time())))
+        os.makedirs(image_folder, exist_ok=True)
 
         # Create subfolders for each label (0-35)
         for i in range(36):
-            class_folder = os.path.join(image_folder, str(i))
+            os.makedirs(os.path.join(image_folder, str(i)), exist_ok=True)
 
-            # this line is leading to errors -connie
-            # if not os.listdir(class_folder):  # Folder is empty
-            #     os.rmdir(class_folder)  # Remove it
-            os.makedirs(class_folder, exist_ok=True)
+        # Temporary storage for images of classes 26-35
+        temp_storage = {i: [] for i in label_mapping.keys()}
 
         # Read the CSV file and convert each row into an image
         with open(csv_file, 'r') as file:
             lines = file.readlines()
             _ = lines[0].strip().split(',')  # Ignore the header row
 
-
-            # Iterate through each data row (starting from the second line)
             for idx, line in enumerate(lines[1:]):
-
                 if not self.loading:
                     break  # Stop if loading was canceled
 
-                values = line.strip().split(',')  # Split the row by commas
+                values = line.strip().split(',')
                 label = int(values[0])  # First value is the label
+                pixels = np.array(values[1:], dtype=np.uint8).reshape(28, 28)
 
-                pixels = np.array(values[1:], dtype=np.uint8).reshape(28, 28)  # Reshape pixels into 28x28 image
-                image = cv2.cvtColor(pixels, cv2.COLOR_GRAY2BGR)  # Convert grayscale to BGR color image
+                image = cv2.cvtColor(pixels, cv2.COLOR_GRAY2BGR)  
+                image_name = f"{label}_{idx}.png"
 
-                image_path = os.path.join(image_folder, str(label), f"{label}_{idx}.png")
+                # Save images normally if the label is not in the mapping
+                if label not in label_mapping:
+                    image_path = os.path.join(image_folder, str(label), image_name)
+                    cv2.imwrite(image_path, image)
+                else:
+                    # Store images for mapped classes in temp storage
+                    temp_storage[label].append((image, image_name))
+
+        # Move stored images from temp_storage to mapped folders
+        for original_label, images in temp_storage.items():
+            mapped_label = label_mapping[original_label]
+
+            # Skip if the mapped label is None (class should be empty)
+            if mapped_label is None:
+                continue
+
+            mapped_folder = os.path.join(image_folder, str(mapped_label))
+
+            for image, image_name in images:
+                image_path = os.path.join(mapped_folder, image_name)
                 cv2.imwrite(image_path, image)
 
-        return image_folder  # Return the folder path where images are saved
-    
-
-
-
+        return image_folder

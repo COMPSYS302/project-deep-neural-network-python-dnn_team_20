@@ -41,25 +41,7 @@ class ViewDataTab(QWidget):
         layout.addWidget(self.canvas)
 
         self.setLayout(layout)
-
-        # # Label to show the dataset statistics
-        # self.stats_label = QLabel("Dataset Statistics: ")
-        # layout.addWidget(self.stats_label)
-
-
-        # self.status_scroll_area =  QScrollArea() # Label to show status when no images are loaded
-        # self.status_scroll_area.setWidgetResizable(True) 
-        # self.stats_container = QWidget() 
-        # self.stats_layout = QVBoxLayout(self.stats_container)
-        # self.stats_label = QLabel()  # Label to display statistics
-        # self.stats_label.setWordWrap(True)  # Ensure text wraps
-
-        # self.stats_layout.addWidget(self.stats_label)
-        # self.scroll_area.setWidget(self.stats_container)
-
-        # layout.addWidget(self.status_scroll_area)  # Add scroll area to the main layout
-        
-               # Set the layout for this widget
+        # Set the layout for this widget
         self.setLayout(layout)
         
         
@@ -117,18 +99,19 @@ class ViewDataTab(QWidget):
     def update_filter(self):
         filter_text = self.filter_input.text().strip().lower()
 
-        # If the input is a digit, check whether it should map to 26-35
         if filter_text.isdigit():
-            self.display_images(filter_label=filter_text)  # Show images for the digit label
             num = int(filter_text)
             if 0 <= num <= 9:
                 label = str(num + 26)  # Map numbers 0-9 to classes 26-35
-            self.display_images(filter_label=label)
+                self.display_images(filter_label=label)
+            else:
+                self.display_images(filter_label=filter_text)  # Just use the digit directly
         elif filter_text.isalpha() and len(filter_text) == 1:
             label = str(ord(filter_text) - ord('a'))  # Convert 'a' -> 0, ..., 'z' -> 25
             self.display_images(filter_label=label)
         else:
             self.display_images(filter_label=None)  # Show all images if input is invalid
+
 
     def update_statistics(self):
         """Update the statistics label with the count of images for each class."""
