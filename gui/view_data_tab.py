@@ -28,6 +28,7 @@ class ViewDataTab(QWidget):
         self.scroll_layout = QGridLayout()  # Grid layout to arrange the images
         self.scroll_widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.scroll_widget)
+        self.scroll_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
 
         layout.addWidget(self.scroll_area)  # Add the scrollable area to the layout
 
