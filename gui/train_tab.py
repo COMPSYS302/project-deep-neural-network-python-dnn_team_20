@@ -115,7 +115,7 @@ class TrainTab(QWidget):
         # Model Dropdown
         layout.addWidget(QLabel("Select Model"))
         self.model_dropdown = QComboBox()
-        self.model_dropdown.addItems(["AlexNet", "InceptionV3", "CustomCNN"])
+        self.model_dropdown.addItems(["AlexNet", "InceptionV3", "Sesame 1.0"])
         layout.addWidget(self.model_dropdown)
 
         # Train/Test Split
