@@ -73,11 +73,16 @@ class TrainTab(QWidget):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+        if model_name == "AlexNet" or model_name == "InceptionV3":
+            img_size = (224, 224)
+        else:
+            img_size = (28, 28)
+
         transform = transforms.Compose([
-            transforms.Resize((28, 28)),
+            transforms.Resize(img_size),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
-        ])
+])
         # Load dataset using ImageFolder
         dataset = ImageFolder(root=self.dataset_path, transform=transform)
 
