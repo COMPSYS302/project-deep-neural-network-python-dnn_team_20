@@ -118,12 +118,16 @@ class TrainTab(QWidget):
         self.model_dropdown.addItems(["AlexNet", "InceptionV3", "Sesame 1.0"])
         layout.addWidget(self.model_dropdown)
 
-        # Train/Test Split
+# Train/Test Split
         layout.addWidget(QLabel("Train/Test Ratio"))
         self.split_slider = QSlider(Qt.Horizontal)
         self.split_slider.setRange(50, 95)  # 50% to 95%
         self.split_slider.setValue(80)      # default 80%
         layout.addWidget(self.split_slider)
+
+        self.split_label = QLabel(f"{self.split_slider.value()}%")
+        layout.addWidget(self.split_label)
+        self.split_slider.valueChanged.connect(lambda value: self.split_label.setText(f"{value}%"))
 
         # Batch Size
         layout.addWidget(QLabel("Batch size"))
@@ -132,12 +136,20 @@ class TrainTab(QWidget):
         self.batch_slider.setValue(32)
         layout.addWidget(self.batch_slider)
 
+        self.batch_label = QLabel(f"{self.batch_slider.value()}")  # Shows numeric value
+        layout.addWidget(self.batch_label)
+        self.batch_slider.valueChanged.connect(lambda value: self.batch_label.setText(str(value)))
+       
         # Epochs
         layout.addWidget(QLabel("Epochs"))
         self.epoch_slider = QSlider(Qt.Horizontal)
         self.epoch_slider.setRange(1, 100)
         self.epoch_slider.setValue(30)
         layout.addWidget(self.epoch_slider)
+
+        self.epoch_label = QLabel(f"{self.epoch_slider.value()}")  # Shows numeric value
+        layout.addWidget(self.epoch_label)
+        self.epoch_slider.valueChanged.connect(lambda value: self.epoch_label.setText(str(value)))
 
         # Progress Bar
         self.progress_bar = QProgressBar()
