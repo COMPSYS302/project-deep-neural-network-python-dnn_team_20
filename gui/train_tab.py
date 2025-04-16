@@ -4,7 +4,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QSlider, QProgressBar)
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
+from core.model_utils import get_model
 
 class TrainerThread(QThread):
     """
@@ -67,8 +74,7 @@ class TrainerThread(QThread):
                     correct += (predicted == labels).sum().item()
 
             val_acc = 100.0 * correct / total
-            duration = time.time() - start_time
-
+            
             # Emit a signal so the main thread can update the UI
             self.progress_signal.emit(epoch+1, running_loss, val_acc)
 
@@ -79,20 +85,6 @@ class TrainerThread(QThread):
         else:
             # If you want to handle partial training results, do so here
             self.finished_signal.emit("Training Stopped Early")
-
-
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QSlider, QProgressBar
-)
-from PyQt5.QtCore import Qt
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from torchvision import transforms
-from torchvision.datasets import ImageFolder
-from core.model_utils import get_model  # your existing import
-from torch.utils.data import DataLoader, random_split
-import torch
-import os
 
 class TrainTab(QWidget):
     def __init__(self, parent=None):
@@ -118,7 +110,7 @@ class TrainTab(QWidget):
         self.model_dropdown.addItems(["AlexNet", "InceptionV3", "Sesame 1.0"])
         layout.addWidget(self.model_dropdown)
 
-# Train/Test Split
+        # Train/Test Split
         layout.addWidget(QLabel("Train/Test Ratio"))
         self.split_slider = QSlider(Qt.Horizontal)
         self.split_slider.setRange(50, 95)  # 50% to 95%
@@ -184,6 +176,11 @@ class TrainTab(QWidget):
         # UI setup
         self.train_button.setEnabled(False)
         self.stop_button.setEnabled(True)
+        # disable UI elements during training
+        self.model_dropdown.setEnabled(False)
+        self.split_slider.setEnabled(False)
+        self.batch_slider.setEnabled(False)
+        self.epoch_slider.setEnabled(False)
         self.status_label.setText("Initializing training...")
 
         # Collect values from UI
@@ -197,10 +194,8 @@ class TrainTab(QWidget):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # Image size logic
-        if model_name in ["AlexNet", "InceptionV3"]:
-            img_size = (224, 224)
-        else:
-            img_size = (28, 28)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
 
         transform = transforms.Compose([
             transforms.Resize(img_size),
@@ -209,22 +204,25 @@ class TrainTab(QWidget):
         ])
 
         # Load dataset
-        dataset = ImageFolder(root=self.dataset_path, transform=transform)
-        train_len = int(len(dataset) * (split_ratio / 100))
-        val_len = len(dataset) - train_len
-        train_dataset, val_dataset = random_split(dataset, [train_len, val_len])
-
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        try:
+            dataset = ImageFolder(root=self.dataset_path, transform=transform)
+            train_len = int(len(dataset) * (split_ratio / 100))
+            val_len = len(dataset) - train_len
+            train_dataset, val_dataset = random_split(dataset, [train_len, val_len])
+        except Exception as e:
+            self.status_label.setText(f"Error loading dataset: {e}")
+            return
+        
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
         # Create model
         model = get_model(model_name)
         model.to(device)
 
         # Prepare model save path
-        model_file_path = f"{model_name}_E{epochs}_B{batch_size}_S{split_ratio}.pt"
+        model_file_path = os.path.join("models", f"{model_name}_E{epochs}_B{batch_size}_S{split_ratio}.pt")
         os.makedirs("models", exist_ok=True)
-        model_file_path = os.path.join("models", model_file_path)
 
         # Prepare the live plot
         self.figure.clear()
@@ -284,5 +282,9 @@ class TrainTab(QWidget):
         """When training finishes or stops."""
         self.train_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+        self.model_dropdown.setEnabled(True)
+        self.split_slider.setEnabled(True)
+        self.batch_slider.setEnabled(True)
+        self.epoch_slider.setEnabled(True)
         self.status_label.setText(f"Training finished. {msg}")
         self.trainer = None
