@@ -133,7 +133,10 @@ class LoadDataTab(QWidget):
             31: 34,
             30: 27,
             29: 32,
-            35: 31
+            35: 31,
+            32:30,
+            33:29,
+            34:28
         }
 
         # Special mapping for test CSV
@@ -194,10 +197,10 @@ class LoadDataTab(QWidget):
                 image_path = os.path.join(mapped_folder, image_name)
                 cv2.imwrite(image_path, image)
 
-        for class_label in range(36):
+        for class_label in [25, 9]:
             class_path = os.path.join(image_folder, str(class_label))
-            if os.path.isdir(class_path) and not os.listdir(class_path):
+            if os.path.isdir(class_path):
                 os.rmdir(class_path)
-                print(f"Removed empty class folder: {class_path}")
+                print(f"Removed class folder: {class_path}")
                 
         return image_folder
