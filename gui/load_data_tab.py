@@ -194,4 +194,10 @@ class LoadDataTab(QWidget):
                 image_path = os.path.join(mapped_folder, image_name)
                 cv2.imwrite(image_path, image)
 
+        for class_label in range(36):
+            class_path = os.path.join(image_folder, str(class_label))
+            if os.path.isdir(class_path) and not os.listdir(class_path):
+                os.rmdir(class_path)
+                print(f"Removed empty class folder: {class_path}")
+                
         return image_folder
