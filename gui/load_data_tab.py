@@ -21,21 +21,25 @@ class LoadDataTab(QWidget):
         
         layout = QVBoxLayout()
 
-        # Create a QLabel for the title
-        self.title_label = QLabel("SignCare")
-        self.title_label.setStyleSheet("font-size: 60px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px;")
-        
-        # Add the title label to the layout
-        layout.addWidget(self.title_label, alignment=Qt.AlignCenter)
+        self.title_box = QLabel("LOAD")
+        self.title_box.setObjectName("title_box")
+        self.title_box.setAlignment(Qt.AlignCenter)  # Center the text inside the box
+        self.title_box.setWordWrap(True)  # Allow text to wrap
 
-        # Button to load data (CSV file)
-        self.load_button = QPushButton("Load Data")
-        self.load_button.clicked.connect(self.load_data)  # Connect to load_data method
-        layout.addWidget(self.load_button)
+        self.title_box.setFixedHeight(50)  # Set height of the title box
+        self.title_box.setFixedWidth(200)  # Set width of the title box
+
+        # Add the title label to the layout
+        layout.addWidget(self.title_box, alignment= Qt.AlignTop | Qt.AlignHCenter)
 
         # Progress bar to show loading progress
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
+        
+        # Button to load data (CSV file)
+        self.load_button = QPushButton("Load Data")
+        self.load_button.clicked.connect(self.load_data)  # Connect to load_data method
+        layout.addWidget(self.load_button)
 
         # Label to display loading status
         self.status_label = QLabel("No data loaded.")

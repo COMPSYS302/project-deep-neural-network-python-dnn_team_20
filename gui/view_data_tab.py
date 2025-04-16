@@ -14,6 +14,18 @@ class ViewDataTab(QWidget):
         # Layout to hold all the widgets
         layout = QVBoxLayout()
 
+        self.title_box = QLabel("VIEW")
+        self.title_box.setObjectName("title_box")
+        self.title_box.setAlignment(Qt.AlignCenter)  # Center the text inside the box
+        self.title_box.setWordWrap(True)  # Allow text to wrap
+
+        self.title_box.setFixedHeight(50)  # Set height of the title box
+        self.title_box.setFixedWidth(200)  # Set width of the title box
+
+        # Add the title label to the layout
+        layout.addWidget(self.title_box, alignment=Qt.AlignCenter | Qt.AlignTop) 
+
+
         # Input field for the user to type a label to filter images (A-Z or 0-9)
         self.filter_input = QLineEdit()
         self.filter_input.setPlaceholderText("Enter sign label to filter (A-Z or 0-9)")
@@ -23,7 +35,7 @@ class ViewDataTab(QWidget):
         # Scrollable area to display images
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)  # Allow the widget to resize
-        self.scroll_area.setMinimumSize(600, 400)  # Set minimum size for the scroll area
+        self.scroll_area.setMinimumSize(600, 250)  # Set minimum size for the scroll area
         self.scroll_widget = QWidget()  # Widget to hold all the images
         self.scroll_layout = QGridLayout()  # Grid layout to arrange the images
         self.scroll_widget.setLayout(self.scroll_layout)

@@ -48,7 +48,6 @@ class TrainerThread(QThread):
 
             self.model.train()
             running_loss = 0.0
-            start_time = time.time()
 
             for images, labels in self.train_loader:
                 if self._stop_flag:
@@ -92,17 +91,16 @@ class TrainTab(QWidget):
 
         layout = QVBoxLayout()
 
-        # Start/Stop Buttons
-        self.train_button = QPushButton("Start Training")
-        self.stop_button = QPushButton("Stop Training")
-        self.stop_button.setEnabled(False)
+        self.title_box = QLabel("TRAIN")
+        self.title_box.setObjectName("title_box")
+        self.title_box.setAlignment(Qt.AlignCenter)  # Center the text inside the box
+        self.title_box.setWordWrap(True)  # Allow text to wrap
 
-        # Connect button signals
-        self.train_button.clicked.connect(self.start_training)
-        self.stop_button.clicked.connect(self.stop_training)
+        self.title_box.setFixedHeight(50)  # Set height of the title box
+        self.title_box.setFixedWidth(200)  # Set width of the title box
 
-        layout.addWidget(self.train_button)
-        layout.addWidget(self.stop_button)
+        # Add the title label to the layout
+        layout.addWidget(self.title_box, alignment=Qt.AlignCenter | Qt.AlignTop)
 
         # Model Dropdown
         layout.addWidget(QLabel("Select Model"))
@@ -111,37 +109,62 @@ class TrainTab(QWidget):
         layout.addWidget(self.model_dropdown)
 
         # Train/Test Split
-        layout.addWidget(QLabel("Train/Test Ratio"))
+        ratio_layout = QVBoxLayout()
+        ratio_label = QLabel("Train/Test Ratio")
+        ratio_label.setAlignment(Qt.AlignVCenter) 
         self.split_slider = QSlider(Qt.Horizontal)
         self.split_slider.setRange(50, 95)  # 50% to 95%
         self.split_slider.setValue(80)      # default 80%
-        layout.addWidget(self.split_slider)
+        self.split_value_label = QLabel(f"{self.split_slider.value()}%") 
+        self.split_value_label.setObjectName("split_value_label")
+        self.split_slider.valueChanged.connect(lambda value: self.split_value_label.setText(f"{value}%"))
 
-        self.split_label = QLabel(f"{self.split_slider.value()}%")
-        layout.addWidget(self.split_label)
-        self.split_slider.valueChanged.connect(lambda value: self.split_label.setText(f"{value}%"))
+        # Add widgets to the layout
+        ratio_layout.addWidget(ratio_label, alignment=Qt.AlignCenter)
+        ratio_layout.addWidget(self.split_slider)
+        ratio_layout.addWidget(self.split_value_label, alignment=Qt.AlignRight)
+        layout.addLayout(ratio_layout)
 
         # Batch Size
-        layout.addWidget(QLabel("Batch size"))
+        batch_layout = QVBoxLayout()  
+        batch_label = QLabel("Batch size")
+        batch_label.setAlignment(Qt.AlignCenter)  
         self.batch_slider = QSlider(Qt.Horizontal)
         self.batch_slider.setRange(8, 128)
         self.batch_slider.setValue(32)
-        layout.addWidget(self.batch_slider)
+        self.batch_value_label = QLabel(f"{self.batch_slider.value()}")  
+        self.batch_value_label.setObjectName("split_value_label")  # Set the object name
+        self.batch_slider.valueChanged.connect(lambda value: self.batch_value_label.setText(str(value)))
 
-        self.batch_label = QLabel(f"{self.batch_slider.value()}")  # Shows numeric value
-        layout.addWidget(self.batch_label)
-        self.batch_slider.valueChanged.connect(lambda value: self.batch_label.setText(str(value)))
-       
+        # Add widgets to the layout
+        batch_layout.addWidget(batch_label, alignment=Qt.AlignCenter)
+        batch_layout.addWidget(self.batch_slider)
+        batch_layout.addWidget(self.batch_value_label, alignment=Qt.AlignRight)
+        layout.addLayout(batch_layout)
+            
         # Epochs
-        layout.addWidget(QLabel("Epochs"))
+        epoch_layout = QVBoxLayout() 
+        epoch_label = QLabel("Epochs")
+        epoch_label.setAlignment(Qt.AlignCenter)  
         self.epoch_slider = QSlider(Qt.Horizontal)
         self.epoch_slider.setRange(1, 100)
         self.epoch_slider.setValue(30)
-        layout.addWidget(self.epoch_slider)
+        self.epoch_value_label = QLabel(f"{self.epoch_slider.value()}")  
+        self.epoch_value_label.setObjectName("split_value_label")  
+        self.epoch_slider.valueChanged.connect(lambda value: self.epoch_value_label.setText(str(value)))
 
-        self.epoch_label = QLabel(f"{self.epoch_slider.value()}")  # Shows numeric value
-        layout.addWidget(self.epoch_label)
-        self.epoch_slider.valueChanged.connect(lambda value: self.epoch_label.setText(str(value)))
+        # Add widgets to the layout
+        epoch_layout.addWidget(epoch_label, alignment=Qt.AlignCenter)  # Center the label
+        epoch_layout.addWidget(self.epoch_slider)
+        epoch_layout.addWidget(self.epoch_value_label, alignment=Qt.AlignRight)  # Align value on the right
+        layout.addLayout(epoch_layout)
+
+        # Start Button
+        self.train_button = QPushButton("Start Training")
+
+        # Connect button signals
+        self.train_button.clicked.connect(self.start_training)
+        layout.addWidget(self.train_button)
 
         # Progress Bar
         self.progress_bar = QProgressBar()
@@ -155,6 +178,13 @@ class TrainTab(QWidget):
         self.figure = plt.Figure()
         self.canvas = FigureCanvas(self.figure)
         layout.addWidget(self.canvas)
+
+        # Stop button
+        self.stop_button = QPushButton("Stop Training")
+        self.stop_button.setEnabled(False)
+
+        self.stop_button.clicked.connect(self.stop_training)
+        layout.addWidget(self.stop_button)
 
         self.setLayout(layout)
 
@@ -213,8 +243,8 @@ class TrainTab(QWidget):
             self.status_label.setText(f"Error loading dataset: {e}")
             return
         
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
 
         # Create model
         model = get_model(model_name)
