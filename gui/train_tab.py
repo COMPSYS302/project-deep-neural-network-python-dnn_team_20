@@ -183,6 +183,7 @@ class TrainTab(QWidget):
         print(f"Training {model_name} | Split: {split_ratio}% | Batch: {batch_size} | Epochs: {epochs}")
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = device
 
         # Image size logic
         if model_name in ["AlexNet", "InceptionV3"]:
@@ -208,6 +209,10 @@ class TrainTab(QWidget):
         # Create model
         model = get_model(model_name)
         model.to(device)
+
+        self.trained_model = model
+        self.val_dataset = val_dataset
+        self.device = device  
 
         # Prepare model save path
         model_file_path = f"{model_name}_E{epochs}_B{batch_size}_S{split_ratio}.pt"
