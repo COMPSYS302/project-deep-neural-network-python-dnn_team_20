@@ -15,7 +15,7 @@ class TestTab(QWidget):
 
         layout = QVBoxLayout()
 
-        self.title_box = QLabel("LOAD")
+        self.title_box = QLabel("TEST")
         self.title_box.setObjectName("title_box")
         self.title_box.setAlignment(Qt.AlignCenter)  # Center the text inside the box
         self.title_box.setWordWrap(True)  # Allow text to wrap
@@ -42,7 +42,6 @@ class TestTab(QWidget):
         self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
         self.test_images_btn.clicked.connect(self.test_on_selected_images)
         self.webcam_button.clicked.connect(self.test_with_webcam)
-
         self.model = None
 
     def load_model_from_file(self):
@@ -110,13 +109,22 @@ class TestTab(QWidget):
                 if img is None:
                     results.append(f"Failed to load image: {os.path.basename(path)}")
                     continue
-                
+
                 img_tensor = transform(img).unsqueeze(0).to(device)
                 output = self.model(img_tensor)
                 _, predicted = torch.max(output, 1)
-                results.append(f"{os.path.basename(path)}: {predicted.item()}")
+                predicted_char = self.map_predicted_to_char(predicted.item())
+                results.append(f"{os.path.basename(path)}: {predicted_char}")
 
         self.result_label.setText("Results:\n" + "\n".join(results))
+
+    def map_predicted_to_char(self, predicted):
+        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
+        if 0 <= predicted <= 25:
+            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+        elif 26 <= predicted <= 35:
+            return str(predicted - 26)  # Map 26-35 to 0-9
+        return None
 
     def test_with_webcam(self):
         if self.model is None:
