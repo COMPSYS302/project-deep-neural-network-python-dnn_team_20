@@ -17,6 +17,7 @@ class LoadDataTab(QWidget):
     status_updated = pyqtSignal(str)  # Emitted to update the status message
 
     def __init__(self):
+        self.uploaded_csv_files = set()
         super().__init__()
         
         layout = QVBoxLayout()
@@ -98,6 +99,7 @@ class LoadDataTab(QWidget):
             processed_lines = 0
 
             for file_path, lines in all_lines:
+                self.uploaded_csv_files.add(os.path.basename(file_path))
                 self.convert_csv_to_images(file_path, timestamp_folder, lines)
                 for _ in lines:
                     if not self.loading:
@@ -107,6 +109,27 @@ class LoadDataTab(QWidget):
                     progress = int((processed_lines / total_lines) * 100)
                     self.progress_updated.emit(progress)
                     time.sleep(0.00005)
+
+            uploaded = self.uploaded_csv_files
+
+            if "sign_mnist_alpha_digits_train.csv" in uploaded and "sign_mnist_alpha_digits_test.csv" in uploaded:
+                folders_to_remove = [9, 25]
+            elif "sign_mnist_alpha_digits_train.csv" in uploaded:
+                folders_to_remove = [9, 25, 26, 35]
+            else:
+                folders_to_remove = []
+
+            # Remove folders from final shared image folder
+            for i in range(36):
+                folder_path = os.path.join(self.data_path, str(i))
+                if os.path.isdir(folder_path):
+                    should_remove = (i in folders_to_remove) or (not os.listdir(folder_path))
+                    if should_remove:
+                        try:
+                            os.rmdir(folder_path)
+                            print(f"Removed folder: {folder_path}")
+                        except OSError:
+                            print(f"Could not remove folder (not empty?): {folder_path}")
 
             if self.loading:
                 self.progress_updated.emit(100)
@@ -200,16 +223,5 @@ class LoadDataTab(QWidget):
             for image, image_name in images:
                 image_path = os.path.join(mapped_folder, image_name)
                 cv2.imwrite(image_path, image)
-
-         # Remove empty folders or specifically unwanted class folders (25 and 9)
-        for i in range(36):
-            folder_path = os.path.join(image_folder, str(i))
-            if os.path.isdir(folder_path):
-                if i in [25, 9] or not os.listdir(folder_path):
-                    try:
-                        os.rmdir(folder_path)
-                        print(f"Removed folder: {folder_path}")
-                    except OSError:
-                        print(f"Could not remove folder (not empty?): {folder_path}")
-
+        
         return image_folder
