@@ -17,25 +17,30 @@ class LoadDataTab(QWidget):
     status_updated = pyqtSignal(str)  # Emitted to update the status message
 
     def __init__(self):
+        self.uploaded_csv_files = set()
         super().__init__()
         
         layout = QVBoxLayout()
 
-        # Create a QLabel for the title
-        self.title_label = QLabel("SignCare")
-        self.title_label.setStyleSheet("font-size: 60px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px;")
-        
-        # Add the title label to the layout
-        layout.addWidget(self.title_label, alignment=Qt.AlignCenter)
+        self.title_box = QLabel("LOAD")
+        self.title_box.setObjectName("title_box")
+        self.title_box.setAlignment(Qt.AlignCenter)  # Center the text inside the box
+        self.title_box.setWordWrap(True)  # Allow text to wrap
 
-        # Button to load data (CSV file)
-        self.load_button = QPushButton("Load Data")
-        self.load_button.clicked.connect(self.load_data)  # Connect to load_data method
-        layout.addWidget(self.load_button)
+        self.title_box.setFixedHeight(50)  # Set height of the title box
+        self.title_box.setFixedWidth(200)  # Set width of the title box
+
+        # Add the title label to the layout
+        layout.addWidget(self.title_box, alignment= Qt.AlignTop | Qt.AlignHCenter)
 
         # Progress bar to show loading progress
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
+        
+        # Button to load data (CSV file)
+        self.load_button = QPushButton("Load Data")
+        self.load_button.clicked.connect(self.load_data)  # Connect to load_data method
+        layout.addWidget(self.load_button)
 
         # Label to display loading status
         self.status_label = QLabel("No data loaded.")
@@ -94,6 +99,7 @@ class LoadDataTab(QWidget):
             processed_lines = 0
 
             for file_path, lines in all_lines:
+                self.uploaded_csv_files.add(os.path.basename(file_path))
                 self.convert_csv_to_images(file_path, timestamp_folder, lines)
                 for _ in lines:
                     if not self.loading:
@@ -103,6 +109,27 @@ class LoadDataTab(QWidget):
                     progress = int((processed_lines / total_lines) * 100)
                     self.progress_updated.emit(progress)
                     time.sleep(0.00005)
+
+            uploaded = self.uploaded_csv_files
+
+            if "sign_mnist_alpha_digits_train.csv" in uploaded and "sign_mnist_alpha_digits_test.csv" in uploaded:
+                folders_to_remove = [9, 25]
+            elif "sign_mnist_alpha_digits_train.csv" in uploaded:
+                folders_to_remove = [9, 25, 26, 35]
+            else:
+                folders_to_remove = []
+
+            # Remove folders from final shared image folder
+            for i in range(36):
+                folder_path = os.path.join(self.data_path, str(i))
+                if os.path.isdir(folder_path):
+                    should_remove = (i in folders_to_remove) or (not os.listdir(folder_path))
+                    if should_remove:
+                        try:
+                            os.rmdir(folder_path)
+                            print(f"Removed folder: {folder_path}")
+                        except OSError:
+                            print(f"Could not remove folder (not empty?): {folder_path}")
 
             if self.loading:
                 self.progress_updated.emit(100)
@@ -196,11 +223,5 @@ class LoadDataTab(QWidget):
             for image, image_name in images:
                 image_path = os.path.join(mapped_folder, image_name)
                 cv2.imwrite(image_path, image)
-
-        for class_label in [25, 9]:
-            class_path = os.path.join(image_folder, str(class_label))
-            if os.path.isdir(class_path):
-                os.rmdir(class_path)
-                print(f"Removed class folder: {class_path}")
-                
+        
         return image_folder
