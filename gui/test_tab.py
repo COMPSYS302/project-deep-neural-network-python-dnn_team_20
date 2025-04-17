@@ -86,26 +86,30 @@ class TestTab(QWidget):
             return
 
         model_name = self.train_tab.model_dropdown.currentText()
-        img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
-        to_color = transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert('RGB'))
-        normalize = transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            to_color,
-            transforms.Resize(img_size),
-            transforms.ToTensor(),
-            normalize
-        ])
-
         device = self.train_tab.device
+
+        if model_name == "Sesame 1.0":
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Grayscale(),
+                transforms.Resize((28, 28)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
         self.model.eval()
         results = []
 
         with torch.no_grad():
             for path in file_paths:
                 img = cv2.imread(path)
-
                 if img is None:
                     results.append(f"Failed to load image: {os.path.basename(path)}")
                     continue
@@ -131,14 +135,25 @@ class TestTab(QWidget):
             self.result_label.setText("No model loaded.")
             return
 
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Grayscale(),
-            transforms.Resize((28, 28)),
-            transforms.ToTensor()
-        ])
-
+        model_name = self.train_tab.model_dropdown.currentText()
         device = self.train_tab.device
+
+        if model_name == "Sesame 1.0":
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Grayscale(),
+                transforms.Resize((28, 28)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
         self.model.eval()
         cap = cv2.VideoCapture(0)
 
@@ -146,7 +161,7 @@ class TestTab(QWidget):
             self.result_label.setText("Webcam not accessible.")
             return
 
-        self.result_label.setText("Press 'q' to quit webcam.")
+        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -163,7 +178,8 @@ class TestTab(QWidget):
                 with torch.no_grad():
                     output = self.model(img_tensor)
                     _, predicted = torch.max(output, 1)
-                self.result_label.setText(f"Webcam Prediction: {predicted.item()}")
+                    predicted_char = self.map_predicted_to_char(predicted.item())
+                    self.result_label.setText(f"Webcam Prediction: {predicted_char}")
 
         cap.release()
         cv2.destroyAllWindows()
