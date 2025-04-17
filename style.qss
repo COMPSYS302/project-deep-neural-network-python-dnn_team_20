@@ -94,3 +94,53 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     background: none;
     border: none;
 }
+
+#title_label {
+    font-size: 60px;
+    font-weight: bold;
+    color: #000000;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#catch_phrase_box {
+    background-color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 300; /* Light font weight */
+    color: black;
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px solid #000000; /* Add a border */
+}
+
+#title_box {
+    background-color: #89B3DA;
+    font-size: 28px;
+    font-weight: bold;
+    color: black;
+    border-radius: 10px;
+    padding: 5px;
+    border: 2px solid #000000; /* Add a border */
+}
+
+QSlider::groove:horizontal {
+    border: 1px solid black;  /* Black line border */
+    height: 1px;             /* Thickness of the line */
+    background: black;       /* Black line */
+    border-radius: 1px;      /* Makes the groove slightly rounded */
+}
+
+QSlider::handle:horizontal {
+    background: black;       /* Black circle */
+    border: none;            /* No border around the handle */
+    width: 12px;             /* Diameter of the circle */
+    height: 12px;            /* Diameter of the circle */
+    border-radius: 6px;      /* Makes the handle circular */
+    margin: -5px 0;          /* Centers the handle on the groove */
+}
+
+QLabel#split_value_label {
+    font-size: 12px;  /* Set text size to 10px */
+    color: black;     /* Optional: Change text color */
+    text-align: center; /* Optional: Center text alignment */
+}
