@@ -25,7 +25,6 @@ class TestTab(QWidget):
 
         self.load_model_btn.clicked.connect(self.load_model_from_file)
         self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
-        self.webcam_button.clicked.connect(self.test_with_webcam)
 
         self.model = None
 
