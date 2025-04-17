@@ -231,9 +231,10 @@ class TrainTab(QWidget):
         transform = transforms.Compose([
             transforms.Resize(img_size),
             transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
+            transforms.Normalize(
+                (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+            ) if model_name in ["AlexNet", "InceptionV3"] else transforms.Normalize((0.5,), (0.5,))
         ])
-
         # Load dataset
         try:
             dataset = ImageFolder(root=self.dataset_path, transform=transform)

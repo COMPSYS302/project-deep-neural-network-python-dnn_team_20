@@ -49,8 +49,10 @@ class TestTab(QWidget):
         if file_path:
             model_name = self.train_tab.model_dropdown.currentText()
             model = get_model(model_name)
-            model.load_state_dict(torch.load(file_path, map_location=self.train_tab.device))
-            model.to(self.train_tab.device)
+            device = getattr(self.train_tab, 'device', torch.device('cpu'))
+            model.load_state_dict(torch.load(file_path, map_location=device))
+            model.to(device)
+            self.device = device  
             model.eval()
             self.model = model
             self.result_label.setText(f"Loaded model: {os.path.basename(file_path)}")
@@ -86,19 +88,24 @@ class TestTab(QWidget):
             return
 
         model_name = self.train_tab.model_dropdown.currentText()
-        img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
-        to_color = transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert('RGB'))
-        normalize = transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+
+        # Handle color channels based on model type
+        to_color = transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB"))
+
+        normalize = (
+            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
+            else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        )
 
         transform = transforms.Compose([
-            transforms.ToPILImage(),
+            transforms.ToPILImage(),      # required for transforms like Resize
             to_color,
             transforms.Resize(img_size),
             transforms.ToTensor(),
             normalize
         ])
-
-        device = self.train_tab.device
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         self.model.eval()
         results = []
 
@@ -113,32 +120,39 @@ class TestTab(QWidget):
                 img_tensor = transform(img).unsqueeze(0).to(device)
                 output = self.model(img_tensor)
                 _, predicted = torch.max(output, 1)
-                predicted_char = self.map_predicted_to_char(predicted.item())
-                results.append(f"{os.path.basename(path)}: {predicted_char}")
+                # predicted_char = self.map_predicted_to_char(predicted.item())
+                # results.append(f"{os.path.basename(path)}: {predicted_char}")
+                results.append(f"{os.path.basename(path)}: Class {predicted.item()}")
 
         self.result_label.setText("Results:\n" + "\n".join(results))
 
-    def map_predicted_to_char(self, predicted):
-        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
-        if 0 <= predicted <= 25:
-            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
-        elif 26 <= predicted <= 35:
-            return str(predicted - 26)  # Map 26-35 to 0-9
-        return None
+    # def map_predicted_to_char(self, predicted):
+    #     """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
+    #     if 0 <= predicted <= 25:
+    #         return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+    #     elif 26 <= predicted <= 35:
+    #         return str(predicted - 26)  # Map 26-35 to 0-9
+    #     return None
 
     def test_with_webcam(self):
         if self.model is None:
             self.result_label.setText("No model loaded.")
             return
 
+        # Determine model type (RGB vs grayscale)
+        model_name = self.train_tab.model_dropdown.currentText()
+        img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
+
         transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Grayscale(),
-            transforms.Resize((28, 28)),
-            transforms.ToTensor()
+            transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" 
+                else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        device = self.train_tab.device
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         self.model.eval()
         cap = cv2.VideoCapture(0)
 
@@ -152,7 +166,6 @@ class TestTab(QWidget):
             if not ret:
                 break
 
-            # Show webcam feed
             cv2.imshow("Press 'c' to capture", frame)
             key = cv2.waitKey(1)
 
