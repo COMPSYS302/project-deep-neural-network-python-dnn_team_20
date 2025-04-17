@@ -56,16 +56,21 @@ class SignLanguageApp(QMainWindow):
         self.load_button = QPushButton("LOAD")
         self.view_button = QPushButton("VIEW")
         self.train_button = QPushButton("TRAIN")
+        self.test_button = QPushButton("TEST")
 
         self.load_button.clicked.connect(self.go_to_load_tab)
         self.view_button.clicked.connect(self.go_to_view_tab)
         self.train_button.clicked.connect(self.go_to_train_tab)
+        self.test_button.clicked.connect(self.go_to_test_tab)
 
         menu_layout.addWidget(self.load_button)
         menu_layout.addItem(QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Fixed))  # Spacer with 40px vertical height
         menu_layout.addWidget(self.view_button)
         menu_layout.addItem(QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Fixed))  # Spacer with 40px vertical height
         menu_layout.addWidget(self.train_button)
+        menu_layout.addItem(QSpacerItem(20, 5, QSizePolicy.Minimum, QSizePolicy.Fixed))  # Spacer with 40px vertical height
+        menu_layout.addWidget(self.test_button) 
+        
 
         spacer_bottom = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
         menu_layout.addItem(spacer_bottom)
@@ -93,3 +98,7 @@ class SignLanguageApp(QMainWindow):
     def go_to_train_tab(self):
         """Switch to the Train tab."""
         self.tabs.setCurrentIndex(3)
+
+    def go_to_test_tab(self):
+        """Switch to the Test tab."""
+        self.tabs.setCurrentIndex(4)

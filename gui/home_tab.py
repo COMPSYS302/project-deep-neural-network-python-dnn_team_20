@@ -45,6 +45,7 @@ class HomeTab(QWidget):
         self.load_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.view_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.train_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.test_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         layout.addWidget(self.load_button)
         layout.addWidget(self.view_button)

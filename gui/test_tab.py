@@ -14,7 +14,10 @@ class TestTab(QWidget):
         self.load_model_btn = QPushButton("Load Trained Model From File")
         self.test_memory_model_btn = QPushButton("Test Current Trained Model")
         self.result_label = QLabel("Test results will appear here.")
-
+        self.webcam_button = QPushButton("Test with Webcam")
+      
+       
+        layout.addWidget(self.webcam_button)
         layout.addWidget(self.load_model_btn)
         layout.addWidget(self.test_memory_model_btn)
         layout.addWidget(self.result_label)
@@ -22,6 +25,7 @@ class TestTab(QWidget):
 
         self.load_model_btn.clicked.connect(self.load_model_from_file)
         self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
+        self.webcam_button.clicked.connect(self.test_with_webcam)
 
         self.model = None
 
@@ -59,3 +63,6 @@ class TestTab(QWidget):
 
         accuracy = 100.0 * correct / total
         self.result_label.setText(f"Validation Accuracy: {accuracy:.2f}%")
+
+
+  
