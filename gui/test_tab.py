@@ -148,7 +148,7 @@ class TestTab(QWidget):
                 print(f"🔠 Predicted class: {predicted_index} ({predicted_char})")
 
                 # 🔥 This line was outside the loop — move it in!
-                results.append(f"{os.path.basename(path)} - True: {true_index} ({true_char}), Predicted: {predicted_index} ({predicted_char})")
+                results.append(f"{os.path.basename(path)} - True Class: {true_index} ({true_char}), Predicted Class: {predicted_index} ({predicted_char})")
 
         # After loop, set the result label text
         self.result_label.setText("Results:\n" + "\n".join(results))
