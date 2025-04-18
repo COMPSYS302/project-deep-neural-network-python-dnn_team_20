@@ -228,9 +228,11 @@ class TrainTab(QWidget):
         img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
 
         transform = transforms.Compose([
-            transforms.Resize(img_size),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
+            transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=30),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+            transforms.ToTensor()
         ])
 
         # Load dataset
