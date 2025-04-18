@@ -106,7 +106,6 @@ class TestTab(QWidget):
             normalize
         ])
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
-        device = self.train_tab.device
 
         if model_name == "Sesame 1.0":
             transform = transforms.Compose([
@@ -137,9 +136,21 @@ class TestTab(QWidget):
                 img_tensor = transform(img).unsqueeze(0).to(device)
                 output = self.model(img_tensor)
                 _, predicted = torch.max(output, 1)
-                predicted_char = self.map_predicted_to_char(predicted.item())
-                results.append(f"{os.path.basename(path)}: {predicted_char}")
 
+                predicted_index = predicted.item()
+                predicted_char = self.map_predicted_to_char(predicted_index)
+
+                true_label = os.path.basename(os.path.dirname(path))
+                true_index = int(true_label)  # Since folder name is always a number
+                true_char = self.map_predicted_to_char(true_index)
+
+                print(f"✅ True class: {true_index} ({true_char})")
+                print(f"🔠 Predicted class: {predicted_index} ({predicted_char})")
+
+                # 🔥 This line was outside the loop — move it in!
+                results.append(f"{os.path.basename(path)} - True: {true_index} ({true_char}), Predicted: {predicted_index} ({predicted_char})")
+
+        # After loop, set the result label text
         self.result_label.setText("Results:\n" + "\n".join(results))
 
     def map_predicted_to_char(self, predicted):
