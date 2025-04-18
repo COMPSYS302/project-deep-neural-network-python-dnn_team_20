@@ -88,6 +88,7 @@ class TrainerThread(QThread):
 class TrainTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         layout = QVBoxLayout()
 
@@ -221,11 +222,8 @@ class TrainTab(QWidget):
 
         print(f"Training {model_name} | Split: {split_ratio}% | Batch: {batch_size} | Epochs: {epochs}")
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.device = device
-
         # Image size logic
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
 
         transform = transforms.Compose([
@@ -250,11 +248,11 @@ class TrainTab(QWidget):
 
         # Create model
         model = get_model(model_name)
-        model.to(device)
+        model.to(self.device)
 
         self.trained_model = model
         self.val_dataset = val_dataset
-        self.device = device  
+        self.device = self.device  
 
         # Prepare model save path
         model_file_path = os.path.join("models", f"{model_name}_E{epochs}_B{batch_size}_S{split_ratio}.pt")
@@ -275,7 +273,7 @@ class TrainTab(QWidget):
             train_loader=train_loader,
             val_loader=val_loader,
             epochs=epochs,
-            device=device,
+            device=self.device,
             model_file_path=model_file_path
         )
         # Connect signals

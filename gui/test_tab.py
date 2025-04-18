@@ -106,13 +106,30 @@ class TestTab(QWidget):
             normalize
         ])
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        device = self.train_tab.device
+
+        if model_name == "Sesame 1.0":
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Grayscale(),
+                transforms.Resize((28, 28)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
         self.model.eval()
         results = []
 
         with torch.no_grad():
             for path in file_paths:
                 img = cv2.imread(path)
-
                 if img is None:
                     results.append(f"Failed to load image: {os.path.basename(path)}")
                     continue
@@ -120,19 +137,18 @@ class TestTab(QWidget):
                 img_tensor = transform(img).unsqueeze(0).to(device)
                 output = self.model(img_tensor)
                 _, predicted = torch.max(output, 1)
-                # predicted_char = self.map_predicted_to_char(predicted.item())
-                # results.append(f"{os.path.basename(path)}: {predicted_char}")
-                results.append(f"{os.path.basename(path)}: Class {predicted.item()}")
+                predicted_char = self.map_predicted_to_char(predicted.item())
+                results.append(f"{os.path.basename(path)}: {predicted_char}")
 
         self.result_label.setText("Results:\n" + "\n".join(results))
 
-    # def map_predicted_to_char(self, predicted):
-    #     """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
-    #     if 0 <= predicted <= 25:
-    #         return chr(ord('A') + predicted)  # Map 0-25 to A-Z
-    #     elif 26 <= predicted <= 35:
-    #         return str(predicted - 26)  # Map 26-35 to 0-9
-    #     return None
+    def map_predicted_to_char(self, predicted):
+        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
+        if 0 <= predicted <= 25:
+            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+        elif 26 <= predicted <= 35:
+            return str(predicted - 26)  # Map 26-35 to 0-9
+        return None
 
     def test_with_webcam(self):
         if self.model is None:
@@ -153,6 +169,25 @@ class TestTab(QWidget):
         ])
 
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        model_name = self.train_tab.model_dropdown.currentText()
+        device = self.train_tab.device
+
+        if model_name == "Sesame 1.0":
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Grayscale(),
+                transforms.Resize((28, 28)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
         self.model.eval()
         cap = cv2.VideoCapture(0)
 
@@ -160,7 +195,7 @@ class TestTab(QWidget):
             self.result_label.setText("Webcam not accessible.")
             return
 
-        self.result_label.setText("Press 'q' to quit webcam.")
+        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -176,7 +211,9 @@ class TestTab(QWidget):
                 with torch.no_grad():
                     output = self.model(img_tensor)
                     _, predicted = torch.max(output, 1)
-                self.result_label.setText(f"Webcam Prediction: {predicted.item()}")
+                    predicted_char = self.map_predicted_to_char(predicted.item())
+                    self.result_label.setText(f"Webcam Prediction: {predicted_char}")
 
         cap.release()
         cv2.destroyAllWindows()
+
