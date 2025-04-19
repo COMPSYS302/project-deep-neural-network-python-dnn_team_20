@@ -302,17 +302,17 @@ class TestTab(QWidget):
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
         model_name = self.train_tab.model_dropdown.currentText()
 
+        # Size and transform logic
+        is_rgb_model = model_name in ["AlexNet", "InceptionV3"] or model_name == "Sesame 1.0"  # change this if Sesame uses RGB
         img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
 
-        # Set correct input color mode and normalization
-        if model_name == "Sesame 1.0":
-            to_color = transforms.Grayscale()
-            normalize = transforms.Normalize((0.5,), (0.5,))
-            qimage_format = QImage.Format_Grayscale8
-        else:
-            to_color = transforms.Lambda(lambda x: x.convert("RGB"))
-            normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            qimage_format = QImage.Format_RGB888
+        # 🔧 Transforms based on expected input channels
+        to_color = transforms.Lambda(lambda x: x.convert("RGB")) if is_rgb_model else transforms.Grayscale()
+        normalize = (
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)) if is_rgb_model
+            else transforms.Normalize((0.5,), (0.5,))
+        )
+        qimage_format = QImage.Format_RGB888 if is_rgb_model else QImage.Format_Grayscale8
 
         transform = transforms.Compose([
             to_color,
@@ -353,13 +353,12 @@ class TestTab(QWidget):
 
                 self.result_label.setText(f"Webcam Prediction: {predicted_char}")
 
-                # Display resized image in GUI
+                # Resize image for GUI display
                 display_img = pil_img.resize((128, 128))
-                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, QImage.Format_RGB888)
+                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, qimage_format)
                 pixmap = QPixmap.fromImage(qimage)
                 self.webcam_image_label.setPixmap(pixmap)
                 self.webcam_image_label.setAlignment(Qt.AlignCenter)
-
                 break
 
         cap.release()
