@@ -34,7 +34,6 @@ class TestTab(QWidget):
         self.result_label = QLabel("Test results will appear here.")
         self.webcam_button = QPushButton("Test with Webcam")
         self.webcam_image_label = QLabel()
-        self.webcam_image_label.setFixedSize(140, 140)
         self.webcam_image_label.setAlignment(Qt.AlignCenter)
         self.view_val_images_btn = QPushButton("Open Validation Image Viewer")
         self.predict_selected_btn = QPushButton("Predict Selected Images")
@@ -362,7 +361,7 @@ class TestTab(QWidget):
                     output = self.model(transformed_tensor)
                     _, predicted = torch.max(output, 1)
                     predicted_char = self.map_predicted_to_char(predicted.item())
-
+                
                 self.result_label.setText(f"Webcam Prediction: {predicted_char}")
 
                 # Resize image for GUI display
@@ -371,6 +370,7 @@ class TestTab(QWidget):
                 pixmap = QPixmap.fromImage(qimage)
                 self.webcam_image_label.setPixmap(pixmap)
                 self.webcam_image_label.setAlignment(Qt.AlignCenter)
+                self.webcam_image_label.setFixedSize(140, 140)
                 break
 
         cap.release()
