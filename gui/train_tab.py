@@ -239,6 +239,10 @@ class TrainTab(QWidget):
             val_len = len(full_dataset) - train_len
             train_dataset, val_dataset = random_split(full_dataset, [train_len, val_len])
             print(f"Split took: {time.time() - t1:.2f}s")
+            
+            self.val_dataset = val_dataset
+            self.device = device
+
 
             train_dataset.dataset.transform = train_transform
             val_dataset.dataset.transform = val_transform
