@@ -77,7 +77,7 @@ class ViewDataTab(QWidget):
 
         # Iterate through all class folders (36 labels)
         for class_label in range(36):
-            class_folder = os.path.join(folder_path, str(class_label))
+            class_folder = os.path.join(folder_path, f"{class_label:02d}")
             if os.path.isdir(class_folder):
                 # For each image in the class folder, add to the image data list
                 for img_file in os.listdir(class_folder):

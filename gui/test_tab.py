@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog, QScrollArea, QListWidget, QListWidgetItem, QHBoxLayout, QAbstractItemView, QGridLayout, QCheckBox, QFrame
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog, QScrollArea, QListWidget, QListWidgetItem, QHBoxLayout, QAbstractItemView, QGridLayout, QCheckBox, QFrame
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtGui import QPixmap, QImage
 from torch.utils.data import DataLoader
 import torch
@@ -52,9 +54,14 @@ class TestTab(QWidget):
         layout.addWidget(self.load_model_btn)     
         layout.addWidget(self.webcam_button)
         layout.addWidget(self.test_images_btn)
+        layout.addWidget(self.webcam_image_label)
         layout.addWidget(self.test_memory_model_btn)
         layout.addWidget(self.webcam_image_label)
         layout.addWidget(self.result_label)
+        layout.addWidget(self.view_val_images_btn)
+        layout.addWidget(self.reset_selection_btn)
+        layout.addWidget(self.image_scroll_area)
+        layout.addWidget(self.predict_selected_btn)
         layout.addWidget(self.view_val_images_btn)
         layout.addWidget(self.reset_selection_btn)
         layout.addWidget(self.image_scroll_area)
@@ -65,6 +72,9 @@ class TestTab(QWidget):
         self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
         self.test_images_btn.clicked.connect(self.test_on_selected_images)
         self.webcam_button.clicked.connect(self.test_with_webcam)
+        self.view_val_images_btn.clicked.connect(self.open_validation_viewer)
+        self.predict_selected_btn.clicked.connect(self.predict_selected_images)
+        self.reset_selection_btn.clicked.connect(self.reset_image_selection)
         self.view_val_images_btn.clicked.connect(self.open_validation_viewer)
         self.predict_selected_btn.clicked.connect(self.predict_selected_images)
         self.reset_selection_btn.clicked.connect(self.reset_image_selection)
@@ -284,12 +294,13 @@ class TestTab(QWidget):
 
 
     def map_predicted_to_char(self, predicted):
-        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
         if 0 <= predicted <= 25:
-            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+            return chr(ord('A') + predicted)  # A-Z
         elif 26 <= predicted <= 35:
-            return str(predicted - 26)  # Map 26-35 to 0-9
-        return None
+            return str(predicted - 26)        # 0-9
+        elif predicted == 37:
+            return "?"  # For special/untrained classes
+        return str(predicted)  # Fallback for anything unexpected
 
     def test_with_webcam(self):
         from PIL import Image
@@ -322,8 +333,8 @@ class TestTab(QWidget):
         ])
 
         self.model.eval()
-        cap = cv2.VideoCapture(0)
 
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             self.result_label.setText("Webcam not accessible.")
             return
@@ -347,6 +358,7 @@ class TestTab(QWidget):
                 transformed_tensor = transform(pil_img).unsqueeze(0).to(device)
 
                 with torch.no_grad():
+                    output = self.model(transformed_tensor)
                     output = self.model(transformed_tensor)
                     _, predicted = torch.max(output, 1)
                     predicted_char = self.map_predicted_to_char(predicted.item())
