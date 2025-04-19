@@ -205,7 +205,9 @@ class TrainTab(QWidget):
         batch_size = self.batch_slider.value()
         epochs = self.epoch_slider.value()
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # Create device and store it as an instance attribute
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = self.device
         print(f"Training on {device} | Model: {model_name} | Split: {split_ratio}% | Batch: {batch_size} | Epochs: {epochs}")
 
         img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
