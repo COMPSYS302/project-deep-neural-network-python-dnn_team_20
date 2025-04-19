@@ -341,7 +341,13 @@ class TrainTab(QWidget):
         self.split_slider.setEnabled(True)
         self.batch_slider.setEnabled(True)
         self.epoch_slider.setEnabled(True)
-        self.status_label.setText(f"Training finished. {msg}")
+
+        if self.train_losses and self.val_accuracies:
+            final_loss = self.train_losses[-1]
+            final_acc = self.val_accuracies[-1]
+            self.status_label.setText(f"Training finished. {msg}\nFinal Loss: {final_loss:.2f}, Final Val Acc: {final_acc:.2f}%")
+        else:
+            self.status_label.setText(f"Training finished. {msg}")
         
         if self.trainer:
             self.trainer.wait()
