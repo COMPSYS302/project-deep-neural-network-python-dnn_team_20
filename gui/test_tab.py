@@ -150,8 +150,11 @@ class TestTab(QWidget):
             self.result_label.setText("No model loaded.")
             return
 
-        # Determine model type (RGB vs grayscale)
+        # Get device safely (will use CPU if device attribute doesn't exist)
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         model_name = self.train_tab.model_dropdown.currentText()
+                
+        # Determine model type (RGB vs grayscale)
         img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
 
         transform = transforms.Compose([
@@ -162,26 +165,6 @@ class TestTab(QWidget):
             transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" 
                 else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
-
-        device = getattr(self.train_tab, 'device', torch.device('cpu'))
-        model_name = self.train_tab.model_dropdown.currentText()
-        device = self.train_tab.device
-
-        if model_name == "Sesame 1.0":
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Grayscale(),
-                transforms.Resize((28, 28)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,), (0.5,))
-            ])
-        else:
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ])
 
         self.model.eval()
         cap = cv2.VideoCapture(0)
