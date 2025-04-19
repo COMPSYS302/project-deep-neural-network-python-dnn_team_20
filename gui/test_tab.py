@@ -99,29 +99,13 @@ class TestTab(QWidget):
         )
 
         transform = transforms.Compose([
-            transforms.ToPILImage(),      # required for transforms like Resize
+            transforms.ToPILImage(),
             to_color,
             transforms.Resize(img_size),
             transforms.ToTensor(),
             normalize
         ])
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
-
-        if model_name == "Sesame 1.0":
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Grayscale(),
-                transforms.Resize((28, 28)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,), (0.5,))
-            ])
-        else:
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ])
 
         self.model.eval()
         results = []
@@ -140,15 +124,15 @@ class TestTab(QWidget):
                 predicted_index = predicted.item()
                 predicted_char = self.map_predicted_to_char(predicted_index)
 
-                true_label = os.path.basename(os.path.dirname(path))
-                true_index = int(true_label)  # Since folder name is always a number
-                true_char = self.map_predicted_to_char(true_index)
-
-                print(f"✅ True class: {true_index} ({true_char})")
-                print(f"🔠 Predicted class: {predicted_index} ({predicted_char})")
-
-                # 🔥 This line was outside the loop — move it in!
-                results.append(f"{os.path.basename(path)} - True Class: {true_index} ({true_char}), Predicted Class: {predicted_index} ({predicted_char})")
+                # Try to get true label from folder name, but handle non-numeric folder names
+                try:
+                    folder_name = os.path.basename(os.path.dirname(path))
+                    true_index = int(folder_name)
+                    true_char = self.map_predicted_to_char(true_index)
+                    results.append(f"{os.path.basename(path)} - True Class: {true_index} ({true_char}), Predicted Class: {predicted_index} ({predicted_char})")
+                except ValueError:
+                    # If folder name is not a number, just show prediction
+                    results.append(f"{os.path.basename(path)} - Predicted Class: {predicted_index} ({predicted_char})")
 
         # After loop, set the result label text
         self.result_label.setText("Results:\n" + "\n".join(results))
