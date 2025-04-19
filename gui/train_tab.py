@@ -42,6 +42,8 @@ class TrainerThread(QThread):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=1e-5)
 
+        start_time = time.time()
+
         for epoch in range(self.epochs):
             if self._stop_flag:
                 break
@@ -73,6 +75,11 @@ class TrainerThread(QThread):
                     correct += (predicted == labels).sum().item()
 
             val_acc = 100.0 * correct / total
+
+            # Calculate elapsed time
+            elapsed_time = int(time.time() - start_time)
+            mins, secs = divmod(elapsed_time, 60)
+            self.elapsed_str = f"{mins:02d}:{secs:02d}"
             
             # Emit a signal so the main thread can update the UI
             self.progress_signal.emit(epoch+1, running_loss, val_acc)
@@ -287,10 +294,11 @@ class TrainTab(QWidget):
     def handle_progress_update(self, epoch, train_loss, val_acc):
         self.train_losses.append(train_loss)
         self.val_accuracies.append(val_acc)
+        elapsed = getattr(self.trainer, 'elapsed_str', "--:--")
 
         self.progress_bar.setValue(epoch)
         self.status_label.setText(
-            f"Epoch {epoch}/{self.epoch_slider.value()} - Loss: {train_loss:.2f} - Val Acc: {val_acc:.2f}%"
+            f"Epoch {epoch}/{self.epoch_slider.value()} - Loss: {train_loss:.2f} - Val Acc: {val_acc:.2f}% - Elapsed: {elapsed}"
         )
 
         self.ax.clear()
