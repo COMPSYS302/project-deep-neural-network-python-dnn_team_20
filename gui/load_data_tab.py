@@ -97,6 +97,7 @@ class LoadDataTab(QWidget):
                     total_lines += len(lines)
 
             processed_lines = 0
+            start_time = time.time()
 
             for file_path, lines in all_lines:
                 self.uploaded_csv_files.add(os.path.basename(file_path))
@@ -108,7 +109,16 @@ class LoadDataTab(QWidget):
                     processed_lines += 1
                     progress = int((processed_lines / total_lines) * 100)
                     self.progress_updated.emit(progress)
-                    time.sleep(0.00005)
+
+                    # --- Time Estimation ---
+                    elapsed_time = time.time() - start_time
+                    avg_time_per_line = elapsed_time / processed_lines
+                    remaining_time = avg_time_per_line * (total_lines - processed_lines)
+                    mins, secs = divmod(int(remaining_time), 60)
+                    time_left_str = f"{mins} Min, {secs} Sec left"
+                    self.status_updated.emit(f"Loading... {progress}% | Est. time left: {time_left_str}")
+
+                    time.sleep(0.00005)  # Simulate processing time
 
             uploaded = self.uploaded_csv_files
 
