@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QFileDialog, QScrollArea, QListWidget, QListWidgetItem, QHBoxLayout, QAbstractItemView, QGridLayout, QCheckBox, QFrame
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QImage
 from torch.utils.data import DataLoader
 import torch
 from torchvision import transforms
@@ -30,19 +31,48 @@ class TestTab(QWidget):
         self.test_images_btn = QPushButton("Test with Images")
         self.result_label = QLabel("Test results will appear here.")
         self.webcam_button = QPushButton("Test with Webcam")
+        self.webcam_image_label = QLabel()
+        self.view_val_images_btn = QPushButton("Open Validation Image Viewer")
+        self.predict_selected_btn = QPushButton("Predict Selected Images")
+        self.reset_selection_btn = QPushButton("Reset Selection")
+
+        self.reset_selection_btn.hide()
+
+        self.image_scroll_area = QScrollArea()
+        self.image_scroll_area.setWidgetResizable(True)
+        self.image_grid_widget = QWidget()
+        self.image_grid_layout = QGridLayout()
+        self.image_grid_widget.setLayout(self.image_grid_layout)
+        self.image_scroll_area.setWidget(self.image_grid_widget)
+        self.image_scroll_area.setFixedHeight(300)
+        self.image_scroll_area.hide()
       
         layout.addWidget(self.load_model_btn)     
         layout.addWidget(self.webcam_button)
         layout.addWidget(self.test_images_btn)
+        layout.addWidget(self.webcam_image_label)
         layout.addWidget(self.test_memory_model_btn)
         layout.addWidget(self.result_label)
+        layout.addWidget(self.view_val_images_btn)
+        layout.addWidget(self.reset_selection_btn)
+        layout.addWidget(self.image_scroll_area)
+        layout.addWidget(self.predict_selected_btn)
         self.setLayout(layout)
 
         self.load_model_btn.clicked.connect(self.load_model_from_file)
         self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
         self.test_images_btn.clicked.connect(self.test_on_selected_images)
         self.webcam_button.clicked.connect(self.test_with_webcam)
+        self.view_val_images_btn.clicked.connect(self.open_validation_viewer)
+        self.predict_selected_btn.clicked.connect(self.predict_selected_images)
+        self.reset_selection_btn.clicked.connect(self.reset_image_selection)
         self.model = None
+
+       
+        self.predict_selected_btn.hide()
+
+        self.selected_image_paths = []
+        self.image_checkboxes = []
 
     def load_model_from_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Trained Model", "models", "PyTorch Model (*.pt)")
@@ -56,6 +86,152 @@ class TestTab(QWidget):
             model.eval()
             self.model = model
             self.result_label.setText(f"Loaded model: {os.path.basename(file_path)}")
+
+
+    def open_validation_viewer(self):
+        import torchvision.transforms.functional as TF
+        from torchvision.datasets import ImageFolder
+        from torchvision import transforms
+        from torch.utils.data import DataLoader
+
+        val_dataset = getattr(self.train_tab, 'val_dataset', None)
+        if val_dataset:
+            print("using val dataset from train")
+            dataset_source = "train_tab"
+
+            if hasattr(val_dataset, 'dataset') and hasattr(val_dataset.dataset, 'class_to_idx'):
+                self.class_to_idx = val_dataset.dataset.class_to_idx
+                self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
+
+
+        # If val_dataset isn't available, ask user to choose a folder
+        if val_dataset is None:
+            folder = QFileDialog.getExistingDirectory(self, "Select Test Image Folder", self.train_tab.dataset_path or "")
+            if not folder:
+                self.result_label.setText("No validation dataset or folder selected.")
+                return
+
+            model_name = self.train_tab.model_dropdown.currentText()
+            img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+
+            transform = transforms.Compose([
+                transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
+                transforms.Resize(img_size),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
+                    else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
+            val_dataset = ImageFolder(root=folder, transform=transform)
+            dataset_source = "folder"
+
+        self.image_scroll_area.show()
+        self.predict_selected_btn.show()
+        self.image_grid_layout.setSpacing(10)
+
+        # Clear existing widgets
+        for i in reversed(range(self.image_grid_layout.count())):
+            widget_to_remove = self.image_grid_layout.itemAt(i).widget()
+            self.image_grid_layout.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
+
+        self.image_checkboxes.clear()
+        self.selected_image_paths.clear()
+
+        row, col = 0, 0
+        for idx in range(min(len(val_dataset), 100)):  # Limit for performance
+            image_tensor, label = val_dataset[idx]
+
+            try:
+                image = TF.to_pil_image(image_tensor.cpu())
+            except Exception as e:
+                print(f"Error converting image {idx}: {e}")
+                continue
+
+            # Convert to Qt image
+            qimage = QImage(image.convert("RGB").tobytes(), image.width, image.height, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qimage).scaled(64, 64, Qt.KeepAspectRatio)
+
+            checkbox = QCheckBox()
+            image_label = QLabel()
+            image_label.setPixmap(pixmap)
+            image_label.setFixedSize(70, 70)
+            image_label.setAlignment(Qt.AlignCenter)
+
+            # Layout for image + checkbox
+            frame = QFrame()
+            frame_layout = QVBoxLayout()
+            frame_layout.addWidget(image_label)
+            frame_layout.addWidget(checkbox)
+            frame.setLayout(frame_layout)
+
+            self.image_grid_layout.addWidget(frame, row, col)
+            self.image_checkboxes.append((checkbox, image_tensor, label))
+
+            col += 1
+            if col >= 6:
+                col = 0
+                row += 1
+
+        self.reset_selection_btn.show()
+        self.result_label.setText(f"Loaded validation images from {'training split' if dataset_source == 'train_tab' else 'folder'} ✅")
+
+
+
+    def predict_selected_images(self):
+        if self.model is None:
+            self.result_label.setText("No model loaded.")
+            return
+
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        model_name = self.train_tab.model_dropdown.currentText()
+        self.model.eval()
+
+        correct = total = 0
+        results = []
+
+        with torch.no_grad():
+            for checkbox, img_tensor, true_label in self.image_checkboxes:
+                if not checkbox.isChecked():
+                    continue
+
+                input_tensor = img_tensor.unsqueeze(0).to(device)
+                output = self.model(input_tensor)
+                _, predicted = torch.max(output, 1)
+                predicted_idx = predicted.item()
+                predicted_char = self.map_predicted_to_char(predicted_idx)
+
+                # 🔧 Map the true label using idx_to_class if available
+                try:
+                    if hasattr(self, 'idx_to_class'):
+                        # Handles both Subset(val_dataset) and ImageFolder
+                        true_index = int(self.idx_to_class[true_label])
+                    else:
+                        true_index = true_label
+
+                    true_char = self.map_predicted_to_char(true_index)
+                except Exception as e:
+                    print(f"[Warning] Could not map true label: {e}")
+                    true_char = str(true_label)
+
+                is_correct = predicted_idx == true_index
+                correct += int(is_correct)
+                total += 1
+
+                results.append(
+                    f"True: {true_char}, Predicted: {predicted_char} {'✔️' if is_correct else '❌'}"
+                )
+
+        accuracy = f"\nAccuracy: {100.0 * correct / total:.2f}%" if total > 0 else ""
+        self.result_label.setText("Results:\n" + "\n".join(results) + accuracy)
+
+
+
+    def reset_image_selection(self):
+        self.result_label.setText("Results cleared.")
+        for checkbox, _, _ in self.image_checkboxes:
+            checkbox.setChecked(False)
+
 
     def test_model_in_memory(self):
         model = self.model if self.model else getattr(self.train_tab, 'trained_model', None)
@@ -136,16 +312,21 @@ class TestTab(QWidget):
 
         # After loop, set the result label text
         self.result_label.setText("Results:\n" + "\n".join(results))
-
+    
     def map_predicted_to_char(self, predicted):
-        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
         if 0 <= predicted <= 25:
-            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+            return chr(ord('A') + predicted)  # A-Z
         elif 26 <= predicted <= 35:
-            return str(predicted - 26)  # Map 26-35 to 0-9
-        return None
+            return str(predicted - 26)        # 0-9
+        elif predicted == 37:
+            return "?"  # For special/untrained classes
+        return str(predicted)  # Fallback for anything unexpected
 
     def test_with_webcam(self):
+        import datetime
+        from PIL import Image
+        import numpy as np
+
         if self.model is None:
             self.result_label.setText("No model loaded.")
             return
@@ -153,27 +334,20 @@ class TestTab(QWidget):
         # Get device safely (will use CPU if device attribute doesn't exist)
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
         model_name = self.train_tab.model_dropdown.currentText()
-                
-        # Determine model type (RGB vs grayscale)
-        img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
 
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
-            transforms.Resize(img_size),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" 
-                else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
+        transform, img_size = self.get_transform_pipeline()
 
+
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         self.model.eval()
-        cap = cv2.VideoCapture(0)
 
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             self.result_label.setText("Webcam not accessible.")
             return
 
-        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
+        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and predict.")
+
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -185,13 +359,48 @@ class TestTab(QWidget):
             if key == ord('q'):
                 break
             elif key == ord('c'):
-                img_tensor = transform(frame).unsqueeze(0).to(device)
+                # Convert frame to RGB and apply transform
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(frame_rgb)
+                transformed_tensor = transform(pil_img).unsqueeze(0).to(device)
+
                 with torch.no_grad():
-                    output = self.model(img_tensor)
+                    output = self.model(transformed_tensor)
                     _, predicted = torch.max(output, 1)
-                    predicted_char = self.map_predicted_to_char(predicted.item())
-                    self.result_label.setText(f"Webcam Prediction: {predicted_char}")
+                    predicted_idx = predicted.item()
+                    predicted_char = self.map_predicted_to_char(predicted_idx)
+
+                self.result_label.setText(f"Webcam Prediction: {predicted_char} (Class {predicted_idx})")
+
+                # Show image in GUI
+                display_img = pil_img.resize((128, 128))  # resize for UI
+                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, QImage.Format_RGB888)
+                pixmap = QPixmap.fromImage(qimage)
+                self.webcam_image_label.setPixmap(pixmap)
+                self.webcam_image_label.setAlignment(Qt.AlignCenter)
+
+                break
 
         cap.release()
         cv2.destroyAllWindows()
+
+
+
+    def get_transform_pipeline(self):
+        model_name = self.train_tab.model_dropdown.currentText()
+        img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+
+        to_color = transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB"))
+
+        normalize = (
+            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
+            else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        )
+
+        return transforms.Compose([
+            to_color,
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            normalize
+        ]), img_size
 

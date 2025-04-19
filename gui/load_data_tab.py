@@ -61,6 +61,7 @@ class LoadDataTab(QWidget):
         self.status_updated.connect(self.status_label.setText)
 
     def load_data(self):
+        self.loading = True 
         """Method to open a file dialog and select a CSV file to load data."""
         # Open file dialog to select CSV file
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select CSV Files", "", "CSV Files (*.csv)")
@@ -70,26 +71,23 @@ class LoadDataTab(QWidget):
             self.load_button.setEnabled(False)  # Disable the load button
             self.stop_button.setEnabled(True)  # Enable the stop button
             self.status_updated.emit("Loading data...")  # Update status message
-            self.loading = True  # Set loading to True
 
             # Start the data processing in a separate thread
             self.thread = threading.Thread(target=self.process_data, args=(file_paths,))
             self.thread.start()
 
+
     def process_data(self, file_paths):
         try:
-            # Create a shared image folder for all files
+            # Create output image folder with timestamp
             timestamp_folder = os.path.join(os.path.dirname(file_paths[0]), "images_" + str(int(time.time())))
             os.makedirs(timestamp_folder, exist_ok=True)
-            for i in range(36):
-                os.makedirs(os.path.join(timestamp_folder, str(i)), exist_ok=True)
-
             self.data_path = timestamp_folder
 
             total_lines = 0
             all_lines = []
 
-            # Read and count all lines first (for progress bar)
+            # Count total lines (for progress bar)
             for file_path in file_paths:
                 with open(file_path, 'r') as file:
                     lines = file.readlines()[1:]  # Skip header
@@ -102,6 +100,7 @@ class LoadDataTab(QWidget):
             for file_path, lines in all_lines:
                 self.uploaded_csv_files.add(os.path.basename(file_path))
                 self.convert_csv_to_images(file_path, timestamp_folder, lines)
+
                 for _ in lines:
                     if not self.loading:
                         self.status_updated.emit("Loading stopped.")
@@ -110,7 +109,7 @@ class LoadDataTab(QWidget):
                     progress = int((processed_lines / total_lines) * 100)
                     self.progress_updated.emit(progress)
 
-                    # --- Time Estimation ---
+                    # Time estimation
                     elapsed_time = time.time() - start_time
                     avg_time_per_line = elapsed_time / processed_lines
                     remaining_time = avg_time_per_line * (total_lines - processed_lines)
@@ -118,7 +117,7 @@ class LoadDataTab(QWidget):
                     time_left_str = f"{mins} Min, {secs} Sec left"
                     self.status_updated.emit(f"Loading... {progress}% | Est. time left: {time_left_str}")
 
-                    time.sleep(0.00005)  # Simulate processing time
+                    time.sleep(0.00005)  # Simulate processing delay
 
             uploaded = self.uploaded_csv_files
 
@@ -129,17 +128,17 @@ class LoadDataTab(QWidget):
             else:
                 folders_to_remove = []
 
-            # Remove folders from final shared image folder
-            for i in range(36):
-                folder_path = os.path.join(self.data_path, str(i))
-                if os.path.isdir(folder_path):
-                    should_remove = (i in folders_to_remove) or (not os.listdir(folder_path))
-                    if should_remove:
-                        try:
-                            os.rmdir(folder_path)
-                            print(f"Removed folder: {folder_path}")
-                        except OSError:
-                            print(f"Could not remove folder (not empty?): {folder_path}")
+            # Remove empty or excluded folders using zero-padded names
+            # for i in range(36):
+            #     folder_path = os.path.join(self.data_path, f"{i:02d}")
+            #     if os.path.isdir(folder_path):
+            #         should_remove = (i in folders_to_remove) or (not os.listdir(folder_path))
+            #         if should_remove:
+            #             try:
+            #                 os.rmdir(folder_path)
+            #                 print(f"Removed folder: {folder_path}")
+            #             except OSError:
+            #                 print(f"Could not remove folder (not empty?): {folder_path}")
 
             if self.loading:
                 self.progress_updated.emit(100)
@@ -162,7 +161,7 @@ class LoadDataTab(QWidget):
         import os
         import time
 
-        # Default mapping
+        # Default mapping for train CSV
         label_mapping_train = {
             27: 26,
             26: 35,
@@ -171,9 +170,9 @@ class LoadDataTab(QWidget):
             30: 27,
             29: 32,
             35: 31,
-            32:30,
-            33:29,
-            34:28
+            32: 30,
+            33: 29,
+            34: 28
         }
 
         # Special mapping for test CSV
@@ -183,31 +182,29 @@ class LoadDataTab(QWidget):
             28: 33
         }
 
-        # Select appropriate label mapping
+        # Select appropriate mapping
         if "sign_mnist_alpha_digits_test.csv" in csv_file:
             label_mapping = label_mapping_test
         else:
             label_mapping = label_mapping_train
 
-        # If no output folder was provided, create a new one
+        # Create output folder if not provided
         if image_folder is None:
             image_folder = os.path.join(os.path.dirname(csv_file), "images_" + str(int(time.time())))
-            os.makedirs(image_folder, exist_ok=True)
-            for i in range(36):
-                os.makedirs(os.path.join(image_folder, str(i)), exist_ok=True)
+        
+        for i in range(36):
+            folder_path = os.path.join(image_folder, f"{i:02d}")
+            os.makedirs(folder_path, exist_ok=True)
 
-        # Temporary storage for special remapped classes
-        temp_storage = {i: [] for i in label_mapping.keys()}
-
-        # Read lines from file if not already provided
+        # Read CSV lines if not passed in
         if lines is None:
             with open(csv_file, 'r') as file:
                 lines = file.readlines()[1:]  # Skip header
 
-        # Process each line to create images
+        # Process each line
         for idx, line in enumerate(lines):
             if not self.loading:
-                break  # Stop if loading is cancelled
+                break  # Stop if cancelled
 
             values = line.strip().split(',')
             label = int(values[0])
@@ -215,23 +212,26 @@ class LoadDataTab(QWidget):
             image = cv2.cvtColor(pixels, cv2.COLOR_GRAY2BGR)
             image_name = f"{label}_{idx}.png"
 
-            # Normal save
-            if label not in label_mapping:
-                image_path = os.path.join(image_folder, str(label), image_name)
-                cv2.imwrite(image_path, image)
-            else:
-                # Store temporarily for mapped labels
-                temp_storage[label].append((image, image_name))
+            # Remap label if needed
+            final_label = label_mapping.get(label, label)
+            folder_name = f"{final_label:02d}"  # Zero-padded
+            folder_path = os.path.join(image_folder, folder_name)
+            os.makedirs(folder_path, exist_ok=True)
 
-        # Move remapped images into appropriate folders
-        for original_label, images in temp_storage.items():
-            mapped_label = label_mapping[original_label]
-            if mapped_label is None:
-                continue  # Skip if intentionally left empty
+            image_path = os.path.join(folder_path, image_name)
+            cv2.imwrite(image_path, image)
+            # print(f"[Saved] Label {label} → {final_label} at {image_path}")
 
-            mapped_folder = os.path.join(image_folder, str(mapped_label))
-            for image, image_name in images:
-                image_path = os.path.join(mapped_folder, image_name)
-                cv2.imwrite(image_path, image)
-        
+        # Add dummy image to empty folders to keep ImageFolder happy
+        dummy_image = np.zeros((28, 28, 3), dtype=np.uint8)
+        dummy_path = os.path.join(image_folder, "DUMMY.png")
+
+        for i in range(36):
+            folder_path = os.path.join(image_folder, f"{i:02d}")
+            if not os.listdir(folder_path):  # Folder is empty
+                dummy_img_path = os.path.join(folder_path, "dummy.png")
+                cv2.imwrite(dummy_img_path, dummy_image)
+                print(f"[INFO] Added dummy image to empty folder: {folder_path}")
+
         return image_folder
+
