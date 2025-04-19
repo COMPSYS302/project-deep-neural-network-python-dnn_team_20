@@ -31,6 +31,7 @@ class TestTab(QWidget):
         self.test_images_btn = QPushButton("Test with Images")
         self.result_label = QLabel("Test results will appear here.")
         self.webcam_button = QPushButton("Test with Webcam")
+        self.webcam_image_label = QLabel()
         self.view_val_images_btn = QPushButton("Open Validation Image Viewer")
         self.predict_selected_btn = QPushButton("Predict Selected Images")
         self.reset_selection_btn = QPushButton("Reset Selection")
@@ -49,6 +50,7 @@ class TestTab(QWidget):
         layout.addWidget(self.load_model_btn)     
         layout.addWidget(self.webcam_button)
         layout.addWidget(self.test_images_btn)
+        layout.addWidget(self.webcam_image_label)
         layout.addWidget(self.test_memory_model_btn)
         layout.addWidget(self.result_label)
         layout.addWidget(self.view_val_images_btn)
@@ -310,60 +312,40 @@ class TestTab(QWidget):
 
         # After loop, set the result label text
         self.result_label.setText("Results:\n" + "\n".join(results))
-
+    
     def map_predicted_to_char(self, predicted):
-        """Convert numerical labels to human-readable characters (A-Z or 0-9)."""
         if 0 <= predicted <= 25:
-            return chr(ord('A') + predicted)  # Map 0-25 to A-Z
+            return chr(ord('A') + predicted)  # A-Z
         elif 26 <= predicted <= 35:
-            return str(predicted - 26)  # Map 26-35 to 0-9
-        return None
+            return str(predicted - 26)        # 0-9
+        elif predicted == 37:
+            return "?"  # For special/untrained classes
+        return str(predicted)  # Fallback for anything unexpected
 
     def test_with_webcam(self):
+        import datetime
+        from PIL import Image
+        import numpy as np
+
         if self.model is None:
             self.result_label.setText("No model loaded.")
             return
 
-        # Determine model type (RGB vs grayscale)
         model_name = self.train_tab.model_dropdown.currentText()
-        img_size = (28, 28) if model_name == "Sesame 1.0" else (224, 224)
 
-        transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
-            transforms.Resize(img_size),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0" 
-                else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
+        transform, img_size = self.get_transform_pipeline()
 
-        model_name = self.train_tab.model_dropdown.currentText()
+
         device = getattr(self.train_tab, 'device', torch.device('cpu'))
-
-        if model_name == "Sesame 1.0":
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Grayscale(),
-                transforms.Resize((28, 28)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5,), (0.5,))
-            ])
-        else:
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ])
-
         self.model.eval()
-        cap = cv2.VideoCapture(0)
 
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             self.result_label.setText("Webcam not accessible.")
             return
 
-        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
+        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and predict.")
+
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -375,13 +357,48 @@ class TestTab(QWidget):
             if key == ord('q'):
                 break
             elif key == ord('c'):
-                img_tensor = transform(frame).unsqueeze(0).to(device)
+                # Convert frame to RGB and apply transform
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(frame_rgb)
+                transformed_tensor = transform(pil_img).unsqueeze(0).to(device)
+
                 with torch.no_grad():
-                    output = self.model(img_tensor)
+                    output = self.model(transformed_tensor)
                     _, predicted = torch.max(output, 1)
-                    predicted_char = self.map_predicted_to_char(predicted.item())
-                    self.result_label.setText(f"Webcam Prediction: {predicted_char}")
+                    predicted_idx = predicted.item()
+                    predicted_char = self.map_predicted_to_char(predicted_idx)
+
+                self.result_label.setText(f"Webcam Prediction: {predicted_char} (Class {predicted_idx})")
+
+                # Show image in GUI
+                display_img = pil_img.resize((128, 128))  # resize for UI
+                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, QImage.Format_RGB888)
+                pixmap = QPixmap.fromImage(qimage)
+                self.webcam_image_label.setPixmap(pixmap)
+                self.webcam_image_label.setAlignment(Qt.AlignCenter)
+
+                break
 
         cap.release()
         cv2.destroyAllWindows()
+
+
+
+    def get_transform_pipeline(self):
+        model_name = self.train_tab.model_dropdown.currentText()
+        img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+
+        to_color = transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB"))
+
+        normalize = (
+            transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
+            else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        )
+
+        return transforms.Compose([
+            to_color,
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            normalize
+        ]), img_size
 
