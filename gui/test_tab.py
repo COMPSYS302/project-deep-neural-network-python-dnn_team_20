@@ -331,6 +331,8 @@ class TestTab(QWidget):
             self.result_label.setText("No model loaded.")
             return
 
+        # Get device safely (will use CPU if device attribute doesn't exist)
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         model_name = self.train_tab.model_dropdown.currentText()
 
         transform, img_size = self.get_transform_pipeline()
