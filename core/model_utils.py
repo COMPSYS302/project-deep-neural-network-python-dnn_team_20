@@ -2,12 +2,31 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+from torchvision.models import AlexNet_Weights
+
 
 # Function to get an AlexNet model customized for 36 output classes
 def get_alexnet(num_classes=36):
-    model = models.alexnet(pretrained=False)  # Load AlexNet without pretrained weights
-    model.classifier[6] = nn.Linear(model.classifier[6].in_features, num_classes)  # Modify final layer for classification
-    return model
+    # 1. Load pretrained AlexNet with ImageNet weights
+    model = models.alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
+
+    # 2. Add BatchNorm after each Conv2d layer in features
+    new_features = nn.Sequential()
+    for i, layer in enumerate(model.features):
+        new_features.add_module(str(i), layer)
+        if isinstance(layer, nn.Conv2d):
+            new_features.add_module(f'bn{i}', nn.BatchNorm2d(layer.out_channels))
+    model.features = new_features
+
+    # 3. Remove Dropout in classifier (0 and 3), keep ReLU and Linear
+    model.classifier[0] = nn.Identity()  # replaces Dropout
+    model.classifier[3] = nn.Identity()  # replaces Dropout
+
+    # 4. Replace final classification layer
+    model.classifier[6] = nn.Linear(model.classifier[6].in_features, num_classes)
+
+    # 5. Use channels-last format for faster convolutions on GPU
+    return model.to(memory_format=torch.channels_last)
 
 # Function to get an Inception-v3 model customized for 36 output classes
 def get_inception_v3(num_classes=36):
