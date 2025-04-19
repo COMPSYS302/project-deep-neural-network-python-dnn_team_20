@@ -97,7 +97,6 @@ class TestTab(QWidget):
             print("using val dataset from train")
             dataset_source = "train_tab"
 
-        if dataset_source == "train_tab":
             if hasattr(val_dataset, 'dataset') and hasattr(val_dataset.dataset, 'class_to_idx'):
                 self.class_to_idx = val_dataset.dataset.class_to_idx
                 self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
@@ -338,9 +337,8 @@ class TestTab(QWidget):
                 else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        device = getattr(self.train_tab, 'device', torch.device('cpu'))
         model_name = self.train_tab.model_dropdown.currentText()
-        device = self.train_tab.device
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
 
         if model_name == "Sesame 1.0":
             transform = transforms.Compose([

@@ -29,9 +29,10 @@ class TrainerThread(QThread):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.epochs = epochs
-        self.device = device
         self.model_file_path = model_file_path
         self._stop_flag = False
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
     def stop(self):
         """Call this to request stopping the thread early."""
@@ -91,6 +92,8 @@ class TrainerThread(QThread):
         else:
             # If you want to handle partial training results, do so here
             self.finished_signal.emit("Training Stopped Early")
+
+
 
 class TrainTab(QWidget):
     def __init__(self, parent=None):
@@ -239,6 +242,8 @@ class TrainTab(QWidget):
             train_len = int(len(full_dataset) * (split_ratio / 100))
             val_len = len(full_dataset) - train_len
             train_dataset, val_dataset = random_split(full_dataset, [train_len, val_len])
+            self.train_dataset = train_dataset
+            self.val_dataset = val_dataset
             print(f"Split took: {time.time() - t1:.2f}s")
 
             train_dataset.dataset.transform = train_transform
@@ -291,6 +296,22 @@ class TrainTab(QWidget):
             self.trainer.wait()
             self.trainer.deleteLater()
             self.status_label.setText("Training stopped.")
+            self.trainer.finished_signal.connect(self.cleanup_after_stop)
+
+    def cleanup_after_stop(self, msg):
+        if self.trainer:
+            self.trainer.wait()
+            self.trainer.deleteLater()
+            self.trainer = None
+
+        self.train_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        self.model_dropdown.setEnabled(True)
+        self.split_slider.setEnabled(True)
+        self.batch_slider.setEnabled(True)
+        self.epoch_slider.setEnabled(True)
+        self.status_label.setText("Training stopped.")
+
 
     def handle_progress_update(self, epoch, train_loss, val_acc):
         self.train_losses.append(train_loss)
