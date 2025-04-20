@@ -1,28 +1,69 @@
-# SignCare - Sign Language Recognition System
+![image](https://github.com/user-attachments/assets/08411786-8741-4cda-839d-7baf0473fe7a)# SignCare - Sign Language Recognition System
 
-SignCare is a sign language recognition system designed to facilitate communication between Deaf patients and healthcare providers. Using deep learning models, SignCare translates New Zealand Sign Language (NZSL) gestures into text in real-time, enhancing accessibility and communication.
+SignCare is a sign language recognition system designed to facilitate communication between Deaf patients and healthcare providers. Using deep learning models, SignCare translates ASL gestures into text in real-time, enhancing accessibility and communication.
 
-## Features
+## 🚀 Features
 
-- **Real-Time Sign Language Detection**: Recognizes sign language gestures through webcam input and provides immediate translation.
-- **Multiple Model Support**: Choose from pre-trained models like AlexNet, InceptionV3, or the custom-built Sesame 1.0.
-- **Customizable Training**: Set parameters like batch size, epochs, and train-test split to fine-tune model performance.
-- **Prediction Probability Distribution**: Shows the confidence level of predictions and displays the top 5 predictions for each gesture.
-- **Lightweight & Efficient**: Optimized to work efficiently on devices with limited computational resources.
-- **User-Friendly Interface**: Built with PyQt5 for easy interaction with the system.
+- **Real-Time Sign Language Detection** via webcam
+- **Multiple Model Support:** AlexNet, InceptionV3, and custom-built Sesame 1.0
+- **Custom Training Parameters:** Batch size, epochs, train/test split
+- **Prediction Confidence:** View top 5 predictions and their probabilities
+- **Optimized for Efficiency** on low-resource devices
+- **User-Friendly Interface** built with PyQt5
 
-## Dependencies
+## 📦 Project Environment Setup Instructions
+SignCare requires **Anaconda** and **Pip** to manage the installation of key libraries including PyTorch, PyQt5, NumPy, and OpenCV.
 
-The SignCare project requires the following libraries:
+Anaconda allows you to create isolated environments so that package installations do not interfere with other projects. Pip installs packages within the currently active Conda environment.
 
-- **Python**: Programming language used for the project.
-- **PyQt5**: For creating the graphical user interface (GUI).
-- **TensorFlow**: For implementing deep learning models (CNNs) used in gesture recognition.
-- **OpenCV**: For image and video processing, enabling webcam input and real-time sign recognition.
-- **Matplotlib**: For visualizing training results and displaying charts.
-- **Numpy**: For numerical operations, especially for handling datasets and training matrices.
+> 💡 Use `conda list` to view all packages installed in your current environment.
 
-## Version Details
+1. **Install anaconda**:
+   a. Download for your operating system https://www.anaconda.com/download
+   b. Follow installation instructions. If you are on linux, you need to make the anaconda.sh file executable, then run “./anaconda.sh” in the terminal.
+   ```bash
+   conda create --name cs302 python=3.9
+   ```
+   c.	In the Anaconda prompt (windows) or a new terminal (linux/osx), create a new conda environment conda create --name cs302 python=3.9
+   ```bash
+   conda activate cs302
+   ```
+   d.	Activate your environment conda activate cs302. You will need to repeat this step every time you want to activate your environment. 
+
+2. **Install Pytorch**:
+   a.	Navigate to https://pytorch.org/
+   b.	Under the Install PyTorch section, select the stable build,  the OS you are using, Conda for type of package and Python for type of language. If you have a Nvidia GPU, select CUDA 11.8 for the compute platform, otherwise select CPU.
+   c.	Copy and paste the command into your anaconda prompt/terminal. Ensure you are still in the cs302 environment. This will take some time.
+   ```bash
+   conda install pytorch torchvision torchaudio pytorch-cuda=11.8 0c pytorch -c nvidia
+   ```
+   
+3.** Install Remaining Packages**
+      In your cs302 environment, use pip to install the correct versions of opencv, pyqt and numpy:
+
+   ```bash
+   pip install open-cv==4.7.0.72
+   ```
+   ```bash
+   pip install PyQt5==5.15.10
+   ```
+   ```bash
+   pip install numpy==1.24.4
+   ```
+4. ** Verify installation **
+   a.	In your conda environment, enter the following commands:
+   ```bash
+   python
+   import torch
+   ```
+   b.	There should be no errors. If you installed pytorch with CUDA, ```bash torch.cuda.is_available() ```
+   should return true
+   c.	Type    ```bash exit() ```to exit the python interpreter
+
+5. Install IDE (Visual studio code)
+   a.	Visit https://code.visualstudio.com/ to download and follow the installation instructions.
+
+## 📚 Libraries
 
 - **Python version**: 3.9.21
 - **PyQt5 version**: 5.15.10
@@ -31,7 +72,7 @@ The SignCare project requires the following libraries:
 - **Matplotlib version**: 3.9.4
 - **Numpy version**: 1.24.4
 
-## Installation
+## 🔧 Installation
 
 To begin using the Sign Language Recognition System, make sure you have the correct prerequisites and dependencies installed on your machine.
 
