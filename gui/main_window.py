@@ -13,7 +13,7 @@ class SignLanguageApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("SignCare")
 
-        self.resize(900, 900)  # Set the initial size of the window
+        self.resize(950, 900)  # Set the initial size of the window
 
         splitter = QSplitter(self)
         splitter.setOrientation(Qt.Horizontal)
