@@ -40,7 +40,6 @@ class TestTab(QWidget):
         layout.addWidget(self.title_box, alignment= Qt.AlignTop | Qt.AlignHCenter)
 
         self.load_model_btn = QPushButton("Load Trained Model From File")
-        self.test_memory_model_btn = QPushButton("Test Current Trained Model")
         self.test_images_btn = QPushButton("Test with Images")
         self.result_label = QLabel("Test results will appear here.")
         self.webcam_button = QPushButton("Test with Webcam")
@@ -64,7 +63,6 @@ class TestTab(QWidget):
         layout.addWidget(self.webcam_button)
         layout.addWidget(self.test_images_btn)
         layout.addWidget(self.webcam_image_label)
-        layout.addWidget(self.test_memory_model_btn)
         layout.addWidget(self.prediction_chart_frame)
         layout.addWidget(self.result_label)
         layout.addWidget(self.view_val_images_btn)
@@ -75,7 +73,6 @@ class TestTab(QWidget):
         self.setLayout(layout)
 
         self.load_model_btn.clicked.connect(self.load_model_from_file)
-        self.test_memory_model_btn.clicked.connect(self.test_model_in_memory)
         self.test_images_btn.clicked.connect(self.test_on_selected_images)
         self.webcam_button.clicked.connect(self.test_with_webcam)
         self.view_val_images_btn.clicked.connect(self.open_validation_viewer)
@@ -281,15 +278,6 @@ class TestTab(QWidget):
         self.result_label.setText("Results cleared.")
         for checkbox, _, _ in self.image_checkboxes:
             checkbox.setChecked(False)
-
-    def test_model_in_memory(self):
-        model = self.model if self.model else getattr(self.train_tab, 'trained_model', None)
-        val_dataset = getattr(self.train_tab, 'val_dataset', None)
-        device = getattr(self.train_tab, 'device', torch.device('cpu'))
-
-        if model is None or val_dataset is None:
-            self.result_label.setText("Model or validation dataset not available.")
-            return
 
 
     def test_on_selected_images(self):
