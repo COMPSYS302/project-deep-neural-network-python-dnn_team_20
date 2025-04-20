@@ -20,6 +20,7 @@ Anaconda allows you to create isolated environments so that package installation
 
 1. **Install anaconda**:
    a. Download for your operating system https://www.anaconda.com/download
+   
    b. Follow installation instructions. If you are on linux, you need to make the anaconda.sh file executable, then run “./anaconda.sh” in the terminal.
    ```bash
    conda create --name cs302 python=3.9
@@ -30,7 +31,7 @@ Anaconda allows you to create isolated environments so that package installation
    ```
    d.	Activate your environment conda activate cs302. You will need to repeat this step every time you want to activate your environment. 
 
-2. **Install Pytorch**:
+3. **Install Pytorch**:
    a.	Navigate to https://pytorch.org/
    
    b.	Under the Install PyTorch section, select the stable build,  the OS you are using, Conda for type of package and Python for type of language. If you have a Nvidia GPU, select CUDA 11.8 for the compute platform, otherwise select CPU.
