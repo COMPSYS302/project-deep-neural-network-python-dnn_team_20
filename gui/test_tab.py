@@ -50,8 +50,6 @@ class TestTab(QWidget):
         self.predict_selected_btn = QPushButton("Predict Selected Images")
         self.reset_selection_btn = QPushButton("Reset Selection")
         self.reset_selection_btn.hide()
-        self.test_entire_val_btn = QPushButton("Test Entire Validation Set")
-        self.test_entire_val_btn.hide()
 
         self.image_scroll_area = QScrollArea()
         self.image_scroll_area.setWidgetResizable(True)
@@ -59,7 +57,7 @@ class TestTab(QWidget):
         self.image_grid_layout = QGridLayout()
         self.image_grid_widget.setLayout(self.image_grid_layout)
         self.image_scroll_area.setWidget(self.image_grid_widget)
-        self.image_scroll_area.setFixedHeight(300)
+        self.image_scroll_area.setFixedHeight(250)
         self.image_scroll_area.hide()
       
         layout.addWidget(self.load_model_btn)
@@ -71,7 +69,6 @@ class TestTab(QWidget):
         layout.addWidget(self.result_label)
         layout.addWidget(self.view_val_images_btn)
         layout.addWidget(self.reset_selection_btn)
-        layout.addWidget(self.test_entire_val_btn)
         layout.addWidget(self.image_scroll_area)
         layout.addWidget(self.predict_selected_btn)
 
@@ -84,7 +81,6 @@ class TestTab(QWidget):
         self.view_val_images_btn.clicked.connect(self.open_validation_viewer)
         self.predict_selected_btn.clicked.connect(self.predict_selected_images)
         self.reset_selection_btn.clicked.connect(self.reset_image_selection)
-        self.test_entire_val_btn.clicked.connect(self.test_entire_validation_set)
 
 
         self.model = None
@@ -206,6 +202,7 @@ class TestTab(QWidget):
             image_label.setAlignment(Qt.AlignCenter)
             # Layout for image + checkbox
             frame = QFrame()
+            
             frame_layout = QVBoxLayout()
             frame_layout.addWidget(image_label)
             frame_layout.addWidget(checkbox)
@@ -217,7 +214,6 @@ class TestTab(QWidget):
                 col = 0
                 row += 1
         self.reset_selection_btn.show()
-        self.test_entire_val_btn.show()
 
         self.result_label.setText(f"Loaded validation images from {'training split' if dataset_source == 'train_tab' else 'folder'} ✅")
 
@@ -295,20 +291,6 @@ class TestTab(QWidget):
             self.result_label.setText("Model or validation dataset not available.")
             return
 
-        model.eval()
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-
-        correct = total = 0
-        with torch.no_grad():
-            for images, labels in val_loader:
-                images, labels = images.to(device), labels.to(device)
-                outputs = model(images)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-
-        accuracy = 100.0 * correct / total
-        self.result_label.setText(f"Validation Accuracy: {accuracy:.2f}%")
 
     def test_on_selected_images(self):
         from PIL import Image
@@ -517,38 +499,7 @@ class TestTab(QWidget):
 
 
 
-    def test_entire_validation_set(self):
-        model = self.model if self.model else getattr(self.train_tab, 'trained_model', None)
-        val_dataset = getattr(self.train_tab, 'val_dataset', None)
-        device = getattr(self.train_tab, 'device', torch.device('cpu'))
-
-        if model is None or val_dataset is None:
-            self.result_label.setText("Model or validation dataset not available.")
-            return
-
-        model.eval()
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-
-        correct = total = 0
-        detailed_results = []
-
-        with torch.no_grad():
-            for images, labels in val_loader:
-                images, labels = images.to(device), labels.to(device)
-                outputs = model(images)
-                _, predicted = torch.max(outputs, 1)
-                correct += (predicted == labels).sum().item()
-                total += labels.size(0)
-
-                for pred, true in zip(predicted, labels):
-                    pred_char = self.map_predicted_to_char(pred.item())
-                    true_char = self.map_predicted_to_char(true.item())
-                    is_correct = pred.item() == true.item()
-                    detailed_results.append(f"True: {true_char}, Predicted: {pred_char} {'✔️' if is_correct else '❌'}")
-
-        accuracy = 100.0 * correct / total
-        result_text = f"Validation Accuracy: {accuracy:.2f}%\n\n" + "\n".join(detailed_results[:50])  # limit output
-        self.result_label.setText(result_text)
+   
 
 
 
