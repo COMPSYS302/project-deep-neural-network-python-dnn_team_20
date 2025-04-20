@@ -44,13 +44,14 @@ class TrainerThread(QThread):
         optimizer = optim.Adam(self.model.parameters(), lr=1e-5)
 
         start_time = time.time()
-
+        
         for epoch in range(self.epochs):
             if self._stop_flag:
                 break
 
             self.model.train()
             running_loss = 0.0
+            num_batches = 0
 
             for images, labels in self.train_loader:
                 if self._stop_flag:
@@ -63,6 +64,9 @@ class TrainerThread(QThread):
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
+                num_batches += 1
+            avg_loss = running_loss / num_batches
+            print(f"Epoch {epoch+1}/{self.epochs}, Average Loss: {avg_loss:.2f}")
 
             # Validation
             self.model.eval()
@@ -83,7 +87,7 @@ class TrainerThread(QThread):
             self.elapsed_str = f"{mins:02d}:{secs:02d}"
             
             # Emit a signal so the main thread can update the UI
-            self.progress_signal.emit(epoch+1, running_loss, val_acc)
+            self.progress_signal.emit(epoch+1, avg_loss, val_acc)
 
         # Finished training — save the model if not stopped
         if not self._stop_flag:
