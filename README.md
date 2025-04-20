@@ -32,7 +32,7 @@ Anaconda allows you to create isolated environments so that package installation
    ```
    d.	Activate your environment conda activate cs302. You will need to repeat this step every time you want to activate your environment. 
 
-3. **Install Pytorch**:
+2. **Install Pytorch**:
 
    a.	Navigate to https://pytorch.org/
    
@@ -43,7 +43,7 @@ Anaconda allows you to create isolated environments so that package installation
    conda install pytorch torchvision torchaudio pytorch-cuda=11.8 0c pytorch -c nvidia
    ```
    
-3.** Install Remaining Packages**
+3. ** Install Remaining Packages**
    
    In your cs302 environment, use pip to install the correct versions of opencv, pyqt and numpy:
 
@@ -56,7 +56,7 @@ Anaconda allows you to create isolated environments so that package installation
    ```bash
    pip install numpy==1.24.4
    ```
-4. ** Verify installation **
+4. **Verify installation**
 
    a.	In your conda environment, enter the following commands:
    ```bash
@@ -68,7 +68,7 @@ Anaconda allows you to create isolated environments so that package installation
    
    c.	Type    ```bash exit() ```to exit the python interpreter
 
-6. Install IDE (Visual studio code)
+5. **Install IDE (Visual studio code)**
    a.	Visit https://code.visualstudio.com/ to download and follow the installation instructions.
 
 ## 📚 Libraries
