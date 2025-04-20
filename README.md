@@ -32,7 +32,9 @@ Anaconda allows you to create isolated environments so that package installation
 
 2. **Install Pytorch**:
    a.	Navigate to https://pytorch.org/
+   
    b.	Under the Install PyTorch section, select the stable build,  the OS you are using, Conda for type of package and Python for type of language. If you have a Nvidia GPU, select CUDA 11.8 for the compute platform, otherwise select CPU.
+   
    c.	Copy and paste the command into your anaconda prompt/terminal. Ensure you are still in the cs302 environment. This will take some time.
    ```bash
    conda install pytorch torchvision torchaudio pytorch-cuda=11.8 0c pytorch -c nvidia
@@ -58,9 +60,10 @@ Anaconda allows you to create isolated environments so that package installation
    ```
    b.	There should be no errors. If you installed pytorch with CUDA, ```bash torch.cuda.is_available() ```
    should return true
+   
    c.	Type    ```bash exit() ```to exit the python interpreter
 
-5. Install IDE (Visual studio code)
+6. Install IDE (Visual studio code)
    a.	Visit https://code.visualstudio.com/ to download and follow the installation instructions.
 
 ## 📚 Libraries
