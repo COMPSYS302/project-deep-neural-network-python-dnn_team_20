@@ -128,17 +128,6 @@ class LoadDataTab(QWidget):
             else:
                 folders_to_remove = []
 
-            # Remove empty or excluded folders using zero-padded names
-            # for i in range(36):
-            #     folder_path = os.path.join(self.data_path, f"{i:02d}")
-            #     if os.path.isdir(folder_path):
-            #         should_remove = (i in folders_to_remove) or (not os.listdir(folder_path))
-            #         if should_remove:
-            #             try:
-            #                 os.rmdir(folder_path)
-            #                 print(f"Removed folder: {folder_path}")
-            #             except OSError:
-            #                 print(f"Could not remove folder (not empty?): {folder_path}")
 
             if self.loading:
                 self.progress_updated.emit(100)

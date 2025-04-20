@@ -247,6 +247,10 @@ class TrainTab(QWidget):
             self.train_dataset = train_dataset
             self.val_dataset = val_dataset
             print(f"Split took: {time.time() - t1:.2f}s")
+            
+            self.val_dataset = val_dataset
+            self.device = device
+
 
             train_dataset.dataset.transform = train_transform
             val_dataset.dataset.transform = val_transform
