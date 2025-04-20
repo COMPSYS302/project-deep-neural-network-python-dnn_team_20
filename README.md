@@ -97,3 +97,6 @@ Follow the steps below to set up and run the project:
 3. **Compile and Run the application**:
    ```bash  
    python main.py  
+
+## Dataset
+Upload both the train and test sign mnist digital datasets from Canva into the application.
