@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/08411786-8741-4cda-839d-7baf0473fe7a)# SignCare - Sign Language Recognition System
+# SignCare - Sign Language Recognition System
 
 SignCare is a sign language recognition system designed to facilitate communication between Deaf patients and healthcare providers. Using deep learning models, SignCare translates ASL gestures into text in real-time, enhancing accessibility and communication.
 
