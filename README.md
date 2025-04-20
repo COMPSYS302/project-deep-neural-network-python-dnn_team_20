@@ -33,7 +33,8 @@ The SignCare project requires the following libraries:
 
 ## Installation
 
-To get started with theSign Language Recognition System, make sure you have **Python** installed on your machine. 
+To begin using the Sign Language Recognition System, make sure you have the correct prerequisites and dependencies installed on your machine.
+
 Follow the steps below to set up and run the project:
 
 1. **Clone the repository**:
@@ -43,9 +44,7 @@ Follow the steps below to set up and run the project:
 2. **Navigate to the project directory**:
    ```bash
    cd project-deep-neural-network-python-dnn_team_20
-      
-4. **Install the requred dependencies**
 
-6. **Compile and Run the application**:
+3. **Compile and Run the application**:
    ```bash  
    python main.py  
