@@ -25,8 +25,8 @@ The SignCare project requires the following libraries:
 ## Version Details
 
 - **Python version**: 3.9.21
-- **TensorFlow version**: 2.5.0
 - **PyQt5 version**: 5.15.10
+- **TensorFlow version**: 2.5.0
 - **OpenCV version**: 4.7.0.72
 - **Matplotlib version**: 3.9.4
 - **Numpy version**: 1.24.4
