@@ -86,16 +86,56 @@ class TestTab(QWidget):
 
     def load_model_from_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Trained Model", "models", "PyTorch Model (*.pt)")
-        if file_path:
-            model_name = self.train_tab.model_dropdown.currentText()
+        if not file_path:
+            return  # User cancelled
+
+        try:
+            # Infer model type from filename
+            filename = os.path.basename(file_path).lower()
+            if "alexnet" in filename:
+                model_name = "AlexNet"
+            elif "inceptionv3" in filename or "inception" in filename:
+                model_name = "InceptionV3"
+            elif "sesame" in filename:
+                model_name = "Sesame 1.0"
+            else:
+                # If model name can't be inferred, fall back to dropdown if available
+                model_name = getattr(self.train_tab, 'model_dropdown', None)
+                model_name = model_name.currentText() if model_name else "AlexNet"  # Safe fallback
+
+            # Update dropdown UI to reflect loaded model (optional UX consistency)
+            if hasattr(self.train_tab, 'model_dropdown'):
+                index = self.train_tab.model_dropdown.findText(model_name)
+                if index != -1:
+                    self.train_tab.model_dropdown.setCurrentIndex(index)
+
+            # Get model architecture safely
             model = get_model(model_name)
-            device = getattr(self.train_tab, 'device', torch.device('cpu'))
-            model.load_state_dict(torch.load(file_path, map_location=device))
+
+            # Ensure device is set even if no training has occurred
+            if not hasattr(self.train_tab, 'device'):
+                self.train_tab.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            device = self.train_tab.device
+
+            # Try loading model weights
+            try:
+                model.load_state_dict(torch.load(file_path, map_location=device))
+            except RuntimeError as e:
+                self.result_label.setText("Model architecture mismatch. Please ensure you're loading the correct model file.")
+                return
+
             model.to(device)
-            self.device = device  
             model.eval()
+
+            # Set attributes
             self.model = model
-            self.result_label.setText(f"Loaded model: {os.path.basename(file_path)}")
+            self.device = device
+            self.result_label.setText(f"Loaded model: {os.path.basename(file_path)} ({model_name})")
+
+        except Exception as e:
+            self.result_label.setText(f"Failed to load model:\n{str(e)}")
+
+
 
     def open_validation_viewer(self):
         import torchvision.transforms.functional as TF
