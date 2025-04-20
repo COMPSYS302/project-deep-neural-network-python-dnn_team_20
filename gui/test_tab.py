@@ -202,389 +202,389 @@ class TestTab(QWidget):
         except Exception as e:
             self.result_label.setText(f"Failed to load model:\n{str(e)}")
 
-            # Method to open the validation image viewer
-            def open_validation_viewer(self):
-                import torchvision.transforms.functional as TF
-                from torchvision.datasets import ImageFolder
-                from torchvision import transforms
-                from torch.utils.data import DataLoader
+    # Method to open the validation image viewer
+    def open_validation_viewer(self):
+        import torchvision.transforms.functional as TF
+        from torchvision.datasets import ImageFolder
+        from torchvision import transforms
+        from torch.utils.data import DataLoader
 
-                # Hide prediction display and show validation area
-                self.hide_prediction_display()
-                self.show_validation_area()
+        # Hide prediction display and show validation area
+        self.hide_prediction_display()
+        self.show_validation_area()
 
-                # Check if validation dataset is available from the training tab
-                val_dataset = getattr(self.train_tab, 'val_dataset', None)
-                if val_dataset:
-                    print("using val dataset from train")
-                    dataset_source = "train_tab"
+        # Check if validation dataset is available from the training tab
+        val_dataset = getattr(self.train_tab, 'val_dataset', None)
+        if val_dataset:
+            print("using val dataset from train")
+            dataset_source = "train_tab"
 
-                    # Map class indices to class names if available
-                    if hasattr(val_dataset, 'dataset') and hasattr(val_dataset.dataset, 'class_to_idx'):
-                        self.class_to_idx = val_dataset.dataset.class_to_idx
-                        self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
+            # Map class indices to class names if available
+            if hasattr(val_dataset, 'dataset') and hasattr(val_dataset.dataset, 'class_to_idx'):
+                self.class_to_idx = val_dataset.dataset.class_to_idx
+                self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
 
-                # If no validation dataset is available, prompt the user to select a folder
-                if val_dataset is None:
-                    folder = QFileDialog.getExistingDirectory(self, "Select Test Image Folder", self.train_tab.dataset_path or "")
-                    if not folder:
-                        self.result_label.setText("No validation dataset or folder selected.")
-                        return
+        # If no validation dataset is available, prompt the user to select a folder
+        if val_dataset is None:
+            folder = QFileDialog.getExistingDirectory(self, "Select Test Image Folder", self.train_tab.dataset_path or "")
+            if not folder:
+                self.result_label.setText("No validation dataset or folder selected.")
+                return
 
-                    # Determine image size and transformations based on the model
-                    model_name = self.train_tab.model_dropdown.currentText()
-                    img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
-                    transform = transforms.Compose([
-                        transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
-                        transforms.Resize(img_size),
-                        transforms.ToTensor(),
-                        transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
-                            else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                    ])
+            # Determine image size and transformations based on the model
+            model_name = self.train_tab.model_dropdown.currentText()
+            img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+            transform = transforms.Compose([
+                transforms.Grayscale() if model_name == "Sesame 1.0" else transforms.Lambda(lambda x: x.convert("RGB")),
+                transforms.Resize(img_size),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,)) if model_name == "Sesame 1.0"
+                    else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
 
-                # Show the scroll area and prediction button
-                self.image_scroll_area.show()
-                self.predict_selected_btn.show()
-                self.image_grid_layout.setSpacing(10)
+        # Show the scroll area and prediction button
+        self.image_scroll_area.show()
+        self.predict_selected_btn.show()
+        self.image_grid_layout.setSpacing(10)
 
-                # Clear existing widgets in the grid layout
-                for i in reversed(range(self.image_grid_layout.count())):
-                    widget_to_remove = self.image_grid_layout.itemAt(i).widget()
-                    self.image_grid_layout.removeWidget(widget_to_remove)
-                    widget_to_remove.setParent(None)
+        # Clear existing widgets in the grid layout
+        for i in reversed(range(self.image_grid_layout.count())):
+            widget_to_remove = self.image_grid_layout.itemAt(i).widget()
+            self.image_grid_layout.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
 
-                # Clear previous image checkboxes and selections
-                self.image_checkboxes.clear()
-                self.selected_image_paths.clear()
+        # Clear previous image checkboxes and selections
+        self.image_checkboxes.clear()
+        self.selected_image_paths.clear()
 
-                # Populate the grid layout with images and checkboxes
-                row, col = 0, 0
-                for idx in range(min(len(val_dataset), 100)):  # Limit to 100 images for performance
-                    image_tensor, label = val_dataset[idx]
-                    try:
-                        # Convert image tensor to PIL image
-                        image = TF.to_pil_image(image_tensor.cpu())
-                    except Exception as e:
-                        print(f"Error converting image {idx}: {e}")
-                        continue
+        # Populate the grid layout with images and checkboxes
+        row, col = 0, 0
+        for idx in range(min(len(val_dataset), 100)):  # Limit to 100 images for performance
+            image_tensor, label = val_dataset[idx]
+            try:
+                # Convert image tensor to PIL image
+                image = TF.to_pil_image(image_tensor.cpu())
+            except Exception as e:
+                print(f"Error converting image {idx}: {e}")
+                continue
 
-                    # Convert PIL image to Qt image
-                    qimage = QImage(image.convert("RGB").tobytes(), image.width, image.height, QImage.Format_RGB888)
-                    pixmap = QPixmap.fromImage(qimage).scaled(64, 64, Qt.KeepAspectRatio)
+            # Convert PIL image to Qt image
+            qimage = QImage(image.convert("RGB").tobytes(), image.width, image.height, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qimage).scaled(64, 64, Qt.KeepAspectRatio)
 
-                    # Create a checkbox and label for the image
-                    checkbox = QCheckBox()
-                    image_label = QLabel()
-                    image_label.setPixmap(pixmap)
-                    image_label.setFixedSize(70, 70)
-                    image_label.setAlignment(Qt.AlignCenter)
+            # Create a checkbox and label for the image
+            checkbox = QCheckBox()
+            image_label = QLabel()
+            image_label.setPixmap(pixmap)
+            image_label.setFixedSize(70, 70)
+            image_label.setAlignment(Qt.AlignCenter)
 
-                    # Create a frame to hold the image and checkbox
-                    frame = QFrame()
-                    frame_layout = QVBoxLayout()
-                    frame_layout.addWidget(image_label)
-                    frame_layout.addWidget(checkbox)
-                    frame.setLayout(frame_layout)
+            # Create a frame to hold the image and checkbox
+            frame = QFrame()
+            frame_layout = QVBoxLayout()
+            frame_layout.addWidget(image_label)
+            frame_layout.addWidget(checkbox)
+            frame.setLayout(frame_layout)
 
-                    # Add the frame to the grid layout
-                    self.image_grid_layout.addWidget(frame, row, col)
-                    self.image_checkboxes.append((checkbox, image_tensor, label))
+            # Add the frame to the grid layout
+            self.image_grid_layout.addWidget(frame, row, col)
+            self.image_checkboxes.append((checkbox, image_tensor, label))
 
-                    # Update row and column for the next image
-                    col += 1
-                    if col >= 6:
-                        col = 0
-                        row += 1
+            # Update row and column for the next image
+            col += 1
+            if col >= 6:
+                col = 0
+                row += 1
 
-                # Show the reset selection button
-                self.reset_selection_btn.show()
+        # Show the reset selection button
+        self.reset_selection_btn.show()
 
-                # Update the result label to indicate the source of validation images
-                self.result_label.setText(f"Loaded validation images from {'training split' if dataset_source == 'train_tab' else 'folder'} ✅")
+        # Update the result label to indicate the source of validation images
+        self.result_label.setText(f"Loaded validation images from {'training split' if dataset_source == 'train_tab' else 'folder'} ✅")
 
-            # Method to hide the validation image viewer area
-            def hide_validation_area(self):
-                self.image_scroll_area.hide()
-                self.predict_selected_btn.hide()
-                self.reset_selection_btn.hide()
+    # Method to hide the validation image viewer area
+    def hide_validation_area(self):
+        self.image_scroll_area.hide()
+        self.predict_selected_btn.hide()
+        self.reset_selection_btn.hide()
 
-            # Method to show the validation image viewer area
-            def show_validation_area(self):
-                self.image_scroll_area.show()
-                self.predict_selected_btn.show()
-                self.reset_selection_btn.show()
+    # Method to show the validation image viewer area
+    def show_validation_area(self):
+        self.image_scroll_area.show()
+        self.predict_selected_btn.show()
+        self.reset_selection_btn.show()
 
-            # Method to predict labels for selected validation images
-            def predict_selected_images(self):
-                if self.model is None:
-                    self.result_label.setText("No model loaded.")
-                    return
+    # Method to predict labels for selected validation images
+    def predict_selected_images(self):
+        if self.model is None:
+            self.result_label.setText("No model loaded.")
+            return
 
-                # Get the device and model name
-                device = getattr(self.train_tab, 'device', torch.device('cpu'))
-                model_name = self.train_tab.model_dropdown.currentText()
-                self.model.eval()
+        # Get the device and model name
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        model_name = self.train_tab.model_dropdown.currentText()
+        self.model.eval()
 
-                correct = total = 0
-                results = []
+        correct = total = 0
+        results = []
 
-                # Perform predictions on selected images
+        # Perform predictions on selected images
+        with torch.no_grad():
+            for checkbox, img_tensor, true_label in self.image_checkboxes:
+                if not checkbox.isChecked():
+                    continue
+
+                # Prepare the input tensor and perform inference
+                input_tensor = img_tensor.unsqueeze(0).to(device)
+                output = self.model(input_tensor)
+                _, predicted = torch.max(output, 1)
+                predicted_idx = predicted.item()
+                predicted_char = self.map_predicted_to_char(predicted_idx)
+
+                # Map the true label to its corresponding character
+                try:
+                    if hasattr(self, 'idx_to_class'):
+                        true_index = int(self.idx_to_class[true_label])
+                    else:
+                        true_index = true_label
+                    true_char = self.map_predicted_to_char(true_index)
+                except Exception as e:
+                    print(f"[Warning] Could not map true label: {e}")
+                    true_char = str(true_label)
+
+                # Check if the prediction is correct
+                is_correct = predicted_idx == true_index
+                correct += int(is_correct)
+                total += 1
+
+                # Append the result to the results list
+                results.append(
+                    f"True: {true_char}, Predicted: {predicted_char} {'✔️' if is_correct else '❌'}"
+                )
+
+        # Calculate accuracy and update the result label
+        accuracy = f"\nAccuracy: {100.0 * correct / total:.2f}%" if total > 0 else ""
+        self.result_label.setText("Results:\n" + "\n".join(results) + accuracy)
+
+    # Method to reset the selection of validation images
+    def reset_image_selection(self):
+        self.result_label.setText("Results cleared.")
+        for checkbox, _, _ in self.image_checkboxes:
+            checkbox.setChecked(False)
+
+    # Method to test the model on user-selected images
+    def test_on_selected_images(self):
+        from PIL import Image
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import torch.nn.functional as F
+        from torchvision import transforms
+
+        # Hide validation area and show prediction display
+        self.hide_validation_area()
+        self.show_prediction_display()
+
+        # Open file dialog to select test images
+        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Test Images", "", "Images (*.png *.jpg *.jpeg)")
+        if not file_paths or self.model is None:
+            self.result_label.setText("No model loaded or no images selected.")
+            return
+
+        # Determine image size and transformations based on the model
+        model_name = self.train_tab.model_dropdown.currentText()
+        img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Lambda(lambda x: x.convert("RGB")),
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
+        # Get the device and set the model to evaluation mode
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        self.model.eval()
+        results = []
+
+        # Clear previous image and graph
+        self.webcam_image_label.clear()
+        self.figure.clear()
+
+        # Perform predictions on the selected images
+        with torch.no_grad():
+            for path in file_paths:
+                img = cv2.imread(path)
+                if img is None:
+                    results.append(f"Failed to load image: {os.path.basename(path)}")
+                    continue
+
+                # Convert the image to RGB and apply transformations
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(img_rgb)
+                img_tensor = transform(img_rgb).unsqueeze(0).to(device)
+
+                # Perform inference and get top-5 predictions
+                output = self.model(img_tensor)
+                probs = F.softmax(output, dim=1)[0]
+                top_probs, top_indices = torch.topk(probs, 5)
+
+                # Map the predicted index to its corresponding character
+                predicted_index = top_indices[0].item()
+                predicted_char = self.map_predicted_to_char(predicted_index)
+
+                # Try to map the true label if available
+                try:
+                    folder_name = os.path.basename(os.path.dirname(path))
+                    true_index = int(folder_name)
+                    true_char = self.map_predicted_to_char(true_index)
+                    results.append(
+                        f"{os.path.basename(path)} - True: {true_index} ({true_char}), "
+                        f"Predicted: {predicted_index} ({predicted_char})"
+                    )
+                except ValueError:
+                    results.append(
+                        f"{os.path.basename(path)} - Predicted: {predicted_index} ({predicted_char})"
+                    )
+
+                # Display the image in the GUI
+                display_img = pil_img.resize((128, 128))
+                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, QImage.Format_RGB888)
+                pixmap = QPixmap.fromImage(qimage)
+                self.webcam_image_label.setPixmap(pixmap)
+                self.webcam_image_label.setAlignment(Qt.AlignCenter)
+                self.webcam_image_label.setFixedSize(140, 140)
+
+                # Draw the prediction chart
+                ax = self.figure.add_subplot(111)
+                labels = [self.map_predicted_to_char(i.item()) for i in top_indices]
+                values = [p.item() * 100 for p in top_probs]
+
+                ax.bar(labels, values, color='skyblue')
+                ax.set_title("Top 5 Predictions")
+                ax.set_ylabel("Probability (%)")
+                ax.set_xlabel("Class")
+                ax.set_ylim([0, 100])
+                self.canvas.draw()
+
+                break  # Process only the first image for now
+
+        # Update the result label with the predictions
+        self.result_label.setText("Results:\n" + "\n".join(results))
+
+    # Method to map a predicted index to its corresponding character or label
+    def map_predicted_to_char(self, predicted):
+        if 0 <= predicted <= 25:
+            return chr(ord('A') + predicted)  # A-Z
+        elif 26 <= predicted <= 35:
+            return str(predicted - 26)        # 0-9
+        elif predicted == 37:
+            return "?"  # For special/untrained classes
+        return str(predicted)  # Fallback for anything unexpected
+
+    # Method to test the model using webcam input
+    def test_with_webcam(self):
+        from PIL import Image
+        import datetime
+        import torch.nn.functional as F
+
+        # Hide validation area and show prediction display
+        self.hide_validation_area()
+        self.show_prediction_display()
+
+        if self.model is None:
+            self.result_label.setText("No model loaded.")
+            return
+
+        # Get the device and model name
+        device = getattr(self.train_tab, 'device', torch.device('cpu'))
+        model_name = self.train_tab.model_dropdown.currentText()
+
+        # Determine image size and transformations based on the model
+        is_rgb_model = model_name in ["AlexNet", "InceptionV3", "Sesame 1.0"]
+        if model_name == "Sesame 1.0":
+            img_size = (28, 28)
+            to_color = transforms.Lambda(lambda x: x.convert("RGB"))
+            normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        else:
+            img_size = (224, 224)
+            to_color = transforms.Lambda(lambda x: x.convert("RGB"))
+            normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+
+        qimage_format = QImage.Format_RGB888 if is_rgb_model else QImage.Format_Grayscale8
+        transform = transforms.Compose([
+            to_color,
+            transforms.Resize(img_size),
+            transforms.ToTensor(),
+            normalize
+        ])
+
+        # Open the webcam
+        self.model.eval()
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            self.result_label.setText("Webcam not accessible.")
+            return
+
+        self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Display the webcam feed
+            cv2.imshow("Press 'c' to capture", frame)
+            key = cv2.waitKey(1)
+
+            if key == ord('q'):  # Quit the webcam
+                break
+            elif key == ord('c'):  # Capture and test the frame
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_img = Image.fromarray(frame_rgb)
+                transformed_tensor = transform(pil_img).unsqueeze(0).to(device)
+
                 with torch.no_grad():
-                    for checkbox, img_tensor, true_label in self.image_checkboxes:
-                        if not checkbox.isChecked():
-                            continue
+                    output = self.model(transformed_tensor)
+                    probs = F.softmax(output, dim=1)[0]
+                    top_probs, top_indices = torch.topk(probs, 5)
+                    predicted_char = self.map_predicted_to_char(top_indices[0].item())
 
-                        # Prepare the input tensor and perform inference
-                        input_tensor = img_tensor.unsqueeze(0).to(device)
-                        output = self.model(input_tensor)
-                        _, predicted = torch.max(output, 1)
-                        predicted_idx = predicted.item()
-                        predicted_char = self.map_predicted_to_char(predicted_idx)
+                # Update the result label with the prediction
+                self.result_label.setText(f"Webcam Prediction: {predicted_char}")
 
-                        # Map the true label to its corresponding character
-                        try:
-                            if hasattr(self, 'idx_to_class'):
-                                true_index = int(self.idx_to_class[true_label])
-                            else:
-                                true_index = true_label
-                            true_char = self.map_predicted_to_char(true_index)
-                        except Exception as e:
-                            print(f"[Warning] Could not map true label: {e}")
-                            true_char = str(true_label)
+                # Display the captured image in the GUI
+                display_img = pil_img.resize((128, 128))
+                qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, qimage_format)
+                pixmap = QPixmap.fromImage(qimage)
+                self.webcam_image_label.setPixmap(pixmap)
+                self.webcam_image_label.setAlignment(Qt.AlignCenter)
+                self.webcam_image_label.setFixedSize(140, 140)
 
-                        # Check if the prediction is correct
-                        is_correct = predicted_idx == true_index
-                        correct += int(is_correct)
-                        total += 1
-
-                        # Append the result to the results list
-                        results.append(
-                            f"True: {true_char}, Predicted: {predicted_char} {'✔️' if is_correct else '❌'}"
-                        )
-
-                # Calculate accuracy and update the result label
-                accuracy = f"\nAccuracy: {100.0 * correct / total:.2f}%" if total > 0 else ""
-                self.result_label.setText("Results:\n" + "\n".join(results) + accuracy)
-
-            # Method to reset the selection of validation images
-            def reset_image_selection(self):
-                self.result_label.setText("Results cleared.")
-                for checkbox, _, _ in self.image_checkboxes:
-                    checkbox.setChecked(False)
-
-            # Method to test the model on user-selected images
-            def test_on_selected_images(self):
-                from PIL import Image
-                import numpy as np
-                import matplotlib.pyplot as plt
-                import torch.nn.functional as F
-                from torchvision import transforms
-
-                # Hide validation area and show prediction display
-                self.hide_validation_area()
-                self.show_prediction_display()
-
-                # Open file dialog to select test images
-                file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Test Images", "", "Images (*.png *.jpg *.jpeg)")
-                if not file_paths or self.model is None:
-                    self.result_label.setText("No model loaded or no images selected.")
-                    return
-
-                # Determine image size and transformations based on the model
-                model_name = self.train_tab.model_dropdown.currentText()
-                img_size = (224, 224) if model_name in ["AlexNet", "InceptionV3"] else (28, 28)
-                transform = transforms.Compose([
-                    transforms.ToPILImage(),
-                    transforms.Lambda(lambda x: x.convert("RGB")),
-                    transforms.Resize(img_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                ])
-
-                # Get the device and set the model to evaluation mode
-                device = getattr(self.train_tab, 'device', torch.device('cpu'))
-                self.model.eval()
-                results = []
-
-                # Clear previous image and graph
-                self.webcam_image_label.clear()
+                # Plot the top-5 predictions
                 self.figure.clear()
+                ax = self.figure.add_subplot(111)
+                labels = [self.map_predicted_to_char(i.item()) for i in top_indices]
+                values = [p.item() * 100 for p in top_probs]
 
-                # Perform predictions on the selected images
-                with torch.no_grad():
-                    for path in file_paths:
-                        img = cv2.imread(path)
-                        if img is None:
-                            results.append(f"Failed to load image: {os.path.basename(path)}")
-                            continue
+                ax.bar(labels, values)
+                ax.set_title("Top 5 Predictions")
+                ax.set_ylabel("Probability (%)")
+                ax.set_xlabel("Class")
+                self.canvas.draw()
 
-                        # Convert the image to RGB and apply transformations
-                        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                        pil_img = Image.fromarray(img_rgb)
-                        img_tensor = transform(img_rgb).unsqueeze(0).to(device)
+                break
 
-                        # Perform inference and get top-5 predictions
-                        output = self.model(img_tensor)
-                        probs = F.softmax(output, dim=1)[0]
-                        top_probs, top_indices = torch.topk(probs, 5)
+        # Release the webcam and close the window
+        cap.release()
+        cv2.destroyAllWindows()
 
-                        # Map the predicted index to its corresponding character
-                        predicted_index = top_indices[0].item()
-                        predicted_char = self.map_predicted_to_char(predicted_index)
+    # Method to hide the prediction display
+    def hide_prediction_display(self):
+        self.webcam_image_label.clear()
+        self.webcam_image_label.hide()
+        self.prediction_chart_frame.hide()
 
-                        # Try to map the true label if available
-                        try:
-                            folder_name = os.path.basename(os.path.dirname(path))
-                            true_index = int(folder_name)
-                            true_char = self.map_predicted_to_char(true_index)
-                            results.append(
-                                f"{os.path.basename(path)} - True: {true_index} ({true_char}), "
-                                f"Predicted: {predicted_index} ({predicted_char})"
-                            )
-                        except ValueError:
-                            results.append(
-                                f"{os.path.basename(path)} - Predicted: {predicted_index} ({predicted_char})"
-                            )
-
-                        # Display the image in the GUI
-                        display_img = pil_img.resize((128, 128))
-                        qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, QImage.Format_RGB888)
-                        pixmap = QPixmap.fromImage(qimage)
-                        self.webcam_image_label.setPixmap(pixmap)
-                        self.webcam_image_label.setAlignment(Qt.AlignCenter)
-                        self.webcam_image_label.setFixedSize(140, 140)
-
-                        # Draw the prediction chart
-                        ax = self.figure.add_subplot(111)
-                        labels = [self.map_predicted_to_char(i.item()) for i in top_indices]
-                        values = [p.item() * 100 for p in top_probs]
-
-                        ax.bar(labels, values, color='skyblue')
-                        ax.set_title("Top 5 Predictions")
-                        ax.set_ylabel("Probability (%)")
-                        ax.set_xlabel("Class")
-                        ax.set_ylim([0, 100])
-                        self.canvas.draw()
-
-                        break  # Process only the first image for now
-
-                # Update the result label with the predictions
-                self.result_label.setText("Results:\n" + "\n".join(results))
-
-            # Method to map a predicted index to its corresponding character or label
-            def map_predicted_to_char(self, predicted):
-                if 0 <= predicted <= 25:
-                    return chr(ord('A') + predicted)  # A-Z
-                elif 26 <= predicted <= 35:
-                    return str(predicted - 26)        # 0-9
-                elif predicted == 37:
-                    return "?"  # For special/untrained classes
-                return str(predicted)  # Fallback for anything unexpected
-
-            # Method to test the model using webcam input
-            def test_with_webcam(self):
-                from PIL import Image
-                import datetime
-                import torch.nn.functional as F
-
-                # Hide validation area and show prediction display
-                self.hide_validation_area()
-                self.show_prediction_display()
-
-                if self.model is None:
-                    self.result_label.setText("No model loaded.")
-                    return
-
-                # Get the device and model name
-                device = getattr(self.train_tab, 'device', torch.device('cpu'))
-                model_name = self.train_tab.model_dropdown.currentText()
-
-                # Determine image size and transformations based on the model
-                is_rgb_model = model_name in ["AlexNet", "InceptionV3", "Sesame 1.0"]
-                if model_name == "Sesame 1.0":
-                    img_size = (28, 28)
-                    to_color = transforms.Lambda(lambda x: x.convert("RGB"))
-                    normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                else:
-                    img_size = (224, 224)
-                    to_color = transforms.Lambda(lambda x: x.convert("RGB"))
-                    normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-
-                qimage_format = QImage.Format_RGB888 if is_rgb_model else QImage.Format_Grayscale8
-                transform = transforms.Compose([
-                    to_color,
-                    transforms.Resize(img_size),
-                    transforms.ToTensor(),
-                    normalize
-                ])
-
-                # Open the webcam
-                self.model.eval()
-                cap = cv2.VideoCapture(0)
-                if not cap.isOpened():
-                    self.result_label.setText("Webcam not accessible.")
-                    return
-
-                self.result_label.setText("Press 'q' to quit webcam, 'c' to capture and test.")
-
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-
-                    # Display the webcam feed
-                    cv2.imshow("Press 'c' to capture", frame)
-                    key = cv2.waitKey(1)
-
-                    if key == ord('q'):  # Quit the webcam
-                        break
-                    elif key == ord('c'):  # Capture and test the frame
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        pil_img = Image.fromarray(frame_rgb)
-                        transformed_tensor = transform(pil_img).unsqueeze(0).to(device)
-
-                        with torch.no_grad():
-                            output = self.model(transformed_tensor)
-                            probs = F.softmax(output, dim=1)[0]
-                            top_probs, top_indices = torch.topk(probs, 5)
-                            predicted_char = self.map_predicted_to_char(top_indices[0].item())
-
-                        # Update the result label with the prediction
-                        self.result_label.setText(f"Webcam Prediction: {predicted_char}")
-
-                        # Display the captured image in the GUI
-                        display_img = pil_img.resize((128, 128))
-                        qimage = QImage(display_img.convert("RGB").tobytes(), display_img.width, display_img.height, qimage_format)
-                        pixmap = QPixmap.fromImage(qimage)
-                        self.webcam_image_label.setPixmap(pixmap)
-                        self.webcam_image_label.setAlignment(Qt.AlignCenter)
-                        self.webcam_image_label.setFixedSize(140, 140)
-
-                        # Plot the top-5 predictions
-                        self.figure.clear()
-                        ax = self.figure.add_subplot(111)
-                        labels = [self.map_predicted_to_char(i.item()) for i in top_indices]
-                        values = [p.item() * 100 for p in top_probs]
-
-                        ax.bar(labels, values)
-                        ax.set_title("Top 5 Predictions")
-                        ax.set_ylabel("Probability (%)")
-                        ax.set_xlabel("Class")
-                        self.canvas.draw()
-
-                        break
-
-                # Release the webcam and close the window
-                cap.release()
-                cv2.destroyAllWindows()
-
-            # Method to hide the prediction display
-            def hide_prediction_display(self):
-                self.webcam_image_label.clear()
-                self.webcam_image_label.hide()
-                self.prediction_chart_frame.hide()
-
-            # Method to show the prediction display
-            def show_prediction_display(self):
-                self.webcam_image_label.show()
-                self.prediction_chart_frame.show()
+    # Method to show the prediction display
+    def show_prediction_display(self):
+        self.webcam_image_label.show()
+        self.prediction_chart_frame.show()
