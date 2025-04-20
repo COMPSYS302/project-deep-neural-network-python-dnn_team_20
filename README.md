@@ -1,6 +1,6 @@
 # SignCare - Sign Language Recognition System
 
-SignCare is an intelligent sign language recognition system designed to facilitate communication between Deaf patients and healthcare providers. Using deep learning models, SignCare translates New Zealand Sign Language (NZSL) gestures into text in real-time, enhancing accessibility and communication.
+SignCare is a sign language recognition system designed to facilitate communication between Deaf patients and healthcare providers. Using deep learning models, SignCare translates New Zealand Sign Language (NZSL) gestures into text in real-time, enhancing accessibility and communication.
 
 ## Features
 
