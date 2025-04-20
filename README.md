@@ -19,6 +19,7 @@ Anaconda allows you to create isolated environments so that package installation
 > 💡 Use `conda list` to view all packages installed in your current environment.
 
 1. **Install anaconda**:
+
    a. Download for your operating system https://www.anaconda.com/download
    
    b. Follow installation instructions. If you are on linux, you need to make the anaconda.sh file executable, then run “./anaconda.sh” in the terminal.
@@ -32,6 +33,7 @@ Anaconda allows you to create isolated environments so that package installation
    d.	Activate your environment conda activate cs302. You will need to repeat this step every time you want to activate your environment. 
 
 3. **Install Pytorch**:
+
    a.	Navigate to https://pytorch.org/
    
    b.	Under the Install PyTorch section, select the stable build,  the OS you are using, Conda for type of package and Python for type of language. If you have a Nvidia GPU, select CUDA 11.8 for the compute platform, otherwise select CPU.
@@ -42,7 +44,8 @@ Anaconda allows you to create isolated environments so that package installation
    ```
    
 3.** Install Remaining Packages**
-      In your cs302 environment, use pip to install the correct versions of opencv, pyqt and numpy:
+   
+   In your cs302 environment, use pip to install the correct versions of opencv, pyqt and numpy:
 
    ```bash
    pip install open-cv==4.7.0.72
@@ -54,6 +57,7 @@ Anaconda allows you to create isolated environments so that package installation
    pip install numpy==1.24.4
    ```
 4. ** Verify installation **
+
    a.	In your conda environment, enter the following commands:
    ```bash
    python
